@@ -10,13 +10,13 @@ LUCTUS_MONITOR_URL_EXTRA = "http://localhost:7077/luastatextra"
 LUCTUS_MONITOR_URL_INIT = "http://localhost:7077/luajobinit"
 
 
-function debugPrint(text)
+function LuctusDebugPrint(text)
     if LUCTUS_MONITOR_DEBUG then
         print(text)
     end
 end
 
-function debugPrintTable(tab)
+function LuctusDebugPrintTable(tab)
     if LUCTUS_MONITOR_DEBUG then
         PrintTable(tab)
     end
@@ -74,6 +74,9 @@ end
 --Monitor deaths
 local lm_deaths = 0
 hook.Add("PostPlayerDeath","luctus_monitor_stat",function(ply)
+    lm_deaths = lm_deaths + 1
+end)
+hook.Add("OnNPCKilled", "luctus_monitor_stat",function(npc, attacker, inflictor)
     lm_deaths = lm_deaths + 1
 end)
 
@@ -147,7 +150,7 @@ function LuctusMonitorDo()
             print(failMessage)
         end,
         success = function(httpcode,body,headers)
-            debugPrint("[luctus_monitor] Do Sync successfull!")
+            LuctusDebugPrint("[luctus_monitor] Do Sync successfull!")
         end, 
         method = "POST",
         url = LUCTUS_MONITOR_URL,
@@ -156,11 +159,11 @@ function LuctusMonitorDo()
         timeout = 10
     })
     
-    debugPrint("(Do) Sent the following:")
-    debugPrint("Table:")
-    debugPrintTable(data)
-    debugPrint("Json:")
-    debugPrint(util.TableToJSON(data))
+    LuctusDebugPrint("(Do) Sent the following:")
+    LuctusDebugPrint("Table:")
+    LuctusDebugPrintTable(data)
+    LuctusDebugPrint("Json:")
+    LuctusDebugPrint(util.TableToJSON(data))
     LUCTUS_MONITOR_PLAYERS = {}
     lm_deaths = 0
 end
@@ -201,8 +204,8 @@ function LuctusMonitorCollectPlayers()
 end
 
 net.Receive("luctus_monitor_collect",function(len,ply)
-    debugPrint("Got stats for new player:")
-    debugPrint(ply:Nick().."//"..ply:SteamID())
+    LuctusDebugPrint("Got stats for new player:")
+    LuctusDebugPrint(ply:Nick().."//"..ply:SteamID())
     LUCTUS_MONITOR_PLAYERS[ply:SteamID()] = {
         ["steamid"] = ply:SteamID(),
         ["nick"] = ply:Nick(),
@@ -240,6 +243,15 @@ hook.Add("PlayerDeath","luctus_monitor_extra",function(victim,inflictor,attacker
         })
     end
 end)
+hook.Add("OnNPCKilled", "luctus_monitor_extra",function(npc, attacker, inflictor)
+    if IsValid(attacker) and attacker:IsPlayer() and attacker:GetActiveWeapon() and IsValid(attacker:GetActiveWeapon()) then
+        table.insert(weaponkills,{
+            ["wepclass"] = attacker:GetActiveWeapon():GetClass(),
+            ["attacker"] = attacker:SteamID(),
+            ["victim"] = "NPC"
+        })
+    end
+end)
 
 hook.Add("postLoadCustomDarkRPItems","luctus_monitor_extra",function()
     LuctusMonitorSyncJobs()
@@ -262,7 +274,7 @@ function LuctusMonitorSyncJobs()
             print(failMessage)
         end,
         success = function(httpcode,body,headers)
-            debugPrint("[luctus_monitor] DoExtras Init successfull!")
+            LuctusDebugPrint("[luctus_monitor] DoExtras Init successfull!")
         end, 
         method = "POST",
         url = LUCTUS_MONITOR_URL_INIT,
@@ -348,7 +360,7 @@ function LuctusMonitorDoExtras()
             print(failMessage)
         end,
         success = function(httpcode,body,headers)
-            debugPrint("[luctus_monitor] DoExtras Sync successfull!")
+            LuctusDebugPrint("[luctus_monitor] DoExtras Sync successfull!")
         end, 
         method = "POST",
         url = LUCTUS_MONITOR_URL_EXTRA,
@@ -362,11 +374,11 @@ function LuctusMonitorDoExtras()
     jobtimes = {}
     jobswitches = {}
     
-    debugPrint("(DoExtras) Sent the following:")
-    debugPrint("Table:")
-    debugPrintTable(data)
-    debugPrint("Json:")
-    debugPrint(util.TableToJSON(data))
+    LuctusDebugPrint("(DoExtras) Sent the following:")
+    LuctusDebugPrint("Table:")
+    LuctusDebugPrintTable(data)
+    LuctusDebugPrint("Json:")
+    LuctusDebugPrint(util.TableToJSON(data))
 end
 
 print("[luctus_monitor] sv loaded!")

@@ -47,10 +47,11 @@ end)
 
 util.AddNetworkString("luctus_monitor_collect")
 
-timer.Create("luctus_monitor_autorestart",10,0,function()
+timer.Create("luctus_monitor_autorestart",15,0,function()
     if not timer.Exists("luctus_monitor_timer") then
         print("[luctus_monitor] Starting Monitor timer")
         LuctusMonitorStart()
+        LuctusMonitorSyncJobs()
     end
 end)
 
@@ -241,9 +242,13 @@ hook.Add("PlayerDeath","luctus_monitor_extra",function(victim,inflictor,attacker
 end)
 
 hook.Add("postLoadCustomDarkRPItems","luctus_monitor_extra",function()
+    LuctusMonitorSyncJobs()
+end)
+
+function LuctusMonitorSyncJobs()
     local alljobs = {}
     for k,v in pairs(RPExtraTeams) do
-        table.insert(alljobs,v.command)
+        table.insert(alljobs,v.name)
     end
     local data = {
         ["jobnames"] = alljobs,
@@ -265,7 +270,7 @@ hook.Add("postLoadCustomDarkRPItems","luctus_monitor_extra",function()
         type = "application/json; charset=utf-8",
         timeout = 10
     })
-end)
+end
 
 local jobtimes = {}
 local jobswitches = {}

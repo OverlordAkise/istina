@@ -70,6 +70,10 @@ function LuctusMonitorStart()
     end)
 end
 
+hook.Add( "ShutDown", "luctus_monitor_shutdown", function()
+    LuctusMonitorDo(true)
+    LuctusMonitorDoExtras()
+end)
 
 --Monitor deaths
 local lm_deaths = 0
@@ -104,7 +108,7 @@ function GetCurrentTickrate()
     end)
 end
 
-function LuctusMonitorDo()
+function LuctusMonitorDo(shutdowning)
     local data = {["players"] = {}}
     local server_avgfps = 0
     local server_avgfps_c = 0
@@ -119,6 +123,9 @@ function LuctusMonitorDo()
         server_avgfps_c = server_avgfps_c + 1
         if not player.GetBySteamID(k) then
             v.online = false --left already
+        end
+        if shutdowning then
+            v.online = false
         end
         table.insert(data["players"],v)
     end

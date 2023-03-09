@@ -98,6 +98,17 @@ type LuctusLuaError struct {
 	Version     string `json:"v" form:"v"`
 }
 
+type LuctusLog struct {
+	Msg  string `json:"msg" form:"msg"`
+	Date string `json:"date" form:"date"`
+	Cat  string `json:"cat" form:"cat"`
+}
+
+type LuctusLogs struct {
+	Serverid string      `json:"serverid"`
+	Logs     []LuctusLog `json:"logs" form:"logs"`
+}
+
 var LUCTUSDEBUG bool = false
 
 func debugPrint(a ...any) (n int, err error) {
@@ -152,6 +163,12 @@ func main() {
 		var ls LuctusJobSyncs
 		c.BindJSON(&ls)
 		InsertLuaJobSyncs(c.ClientIP(), ls)
+		c.String(200, "OK")
+	})
+	r.POST("/luctuslogs", func(c *gin.Context) {
+		var ll LuctusLogs
+		c.BindJSON(&ll)
+		InsertLuctusLogs(c.ClientIP(), ll)
 		c.String(200, "OK")
 	})
 	fmt.Println("Running...")
@@ -209,11 +226,11 @@ func InitDatabase(conString string) {
     serverid VARCHAR(50),
     serverip VARCHAR(50),
     map VARCHAR(50),
-	gamemode VARCHAR(20),
-	tickrateset INT,
-	tickratecur INT,
-	entscount INT,
-	plycount INT,
+    gamemode VARCHAR(20),
+    tickrateset INT,
+    tickratecur INT,
+    entscount INT,
+    plycount INT,
     avgfps INT,
     avgping INT,
     luaramb INT,
@@ -226,22 +243,22 @@ func InitDatabase(conString string) {
     serverid VARCHAR(50),
     serverip VARCHAR(50),
     steamid VARCHAR(50),
-	nick VARCHAR(50),
-	job VARCHAR(50),
-	fpsavg INT,
-	fpslow INT,
-	fpshigh INT,
-	pingavg INT,
-	pingcur INT,
-	luaramb INT,
-	luarama INT,
+    nick VARCHAR(50),
+    job VARCHAR(50),
+    fpsavg INT,
+    fpslow INT,
+    fpshigh INT,
+    pingavg INT,
+    pingcur INT,
+    luaramb INT,
+    luarama INT,
     os VARCHAR(10),
     country VARCHAR(4),
     screensize VARCHAR(15),
     screenmode VARCHAR(15),
     jitver VARCHAR(20),
     ip VARCHAR(25),
-	playtime INT,
+    playtime INT,
     online BOOL
     )`)
 
@@ -265,6 +282,17 @@ func InitDatabase(conString string) {
     timespent BIGINT,
     unique(serverid,jobname)
     )`)
+
+	db.MustExec(`CREATE TABLE IF NOT EXISTS luctuslog(
+    id SERIAL,
+    ts TIMESTAMP,
+    date VARCHAR(24),
+    serverid VARCHAR(50),
+    serverip VARCHAR(50),
+    cat VARCHAR(255),
+    msg TEXT
+    )`)
+
 	fmt.Println("DB initialized...")
 }
 
@@ -355,4 +383,17 @@ func InsertLuaJobSyncs(serverip string, ls LuctusJobSyncs) {
 	}
 	tx.Commit()
 	debugPrint("["+ls.Serverid+"]", "<<< InsertLuaJobSyncs")
+}
+
+func InsertLuctusLogs(serverip string, ll LuctusLogs) {
+	debugPrint("["+ll.Serverid+"]", ">>> InsertLuctusLogs")
+	debugPrint("["+ll.Serverid+"]", "--- LogLines:", len(ll.Logs))
+	tx := db.MustBegin()
+	for _, v := range ll.Logs {
+		debugPrint("["+ll.Serverid+"]", "Inserting:", ll.Serverid, serverip, v.Date, v.Cat, v.Msg)
+		tx.MustExec("INSERT IGNORE INTO luctuslog(serverid,serverip,date,cat,msg) VALUES(?,?,?,?,?)", ll.Serverid, serverip, v.Date, v.Cat, v.Msg)
+	}
+	tx.Commit()
+
+	debugPrint("["+ll.Serverid+"]", "<<< InsertLuctusLogs")
 }

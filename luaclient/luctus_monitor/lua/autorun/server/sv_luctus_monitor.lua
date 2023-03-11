@@ -200,9 +200,21 @@ hook.Add("PlayerInitialSpawn","luctus_monitor_ply_init",function(ply)
         ["ip"] = ply:IPAddress(),
         ["serverid"] = LUCTUS_MONITOR_SERVER_ID,
         ["playtime"] = 0,
-        ["online"] = true
+        ["playtimel"] = 0,
+        ["online"] = true,
+        ["hookthink"] = -1,
+        ["hooktick"] = -1,
+        ["hookhudpaint"] = -1,
+        ["hookhudpaintbackground"] = -1,
+        ["hookpredrawhud"] = -1,
+        ["hookcreatemove"] = -1,
+        ["concommands"] = -1,
+        ["funccount"] = -1,
+        ["addoncount"] = -1,
+        ["addonsize"] = -1
     }
     ply.lmonplaytime = CurTime()
+    ply.lmonplaytimel = CurTime()
 end)
 
 function LuctusMonitorCollectPlayers()
@@ -218,10 +230,10 @@ net.Receive("luctus_monitor_collect",function(len,ply)
         ["nick"] = ply:Nick(),
         ["job"] = DarkRP and ply:getJobTable().name or "",
         ["pingcur"] = ply:Ping(),
-        ["pingavg"] = net.ReadInt(32),
-        ["fpsavg"] = net.ReadInt(32),
-        ["fpshigh"] = net.ReadInt(32),
-        ["fpslow"] = net.ReadInt(32),
+        ["pingavg"] = net.ReadInt(12),
+        ["fpsavg"] = net.ReadInt(12),
+        ["fpshigh"] = net.ReadInt(12),
+        ["fpslow"] = net.ReadInt(12),
         ["packetslost"] = ply:PacketLoss(),
         ["luaramb"] = net.ReadFloat(),
         ["luarama"] = net.ReadFloat(),
@@ -233,8 +245,20 @@ net.Receive("luctus_monitor_collect",function(len,ply)
         ["ip"] = ply:IPAddress(),
         ["serverid"] = LUCTUS_MONITOR_SERVER_ID,
         ["playtime"] = math.Round(CurTime() - ply.lmonplaytime),
-        ["online"] = true
+        ["playtimel"] = math.Round(CurTime() - ply.lmonplaytimel),
+        ["online"] = true,
+        ["hookthink"] = net.ReadInt(10),
+        ["hooktick"] = net.ReadInt(10),
+        ["hookhudpaint"] = net.ReadInt(10),
+        ["hookhudpaintbackground"] = net.ReadInt(10),
+        ["hookpredrawhud"] = net.ReadInt(10),
+        ["hookcreatemove"] = net.ReadInt(10),
+        ["concommands"] = net.ReadInt(11),
+        ["funccount"] = net.ReadInt(16),
+        ["addoncount"] = net.ReadInt(16),
+        ["addonsize"] = net.ReadInt(32)
     }
+    ply.lmonplaytimel = CurTime()
 end)
 
 

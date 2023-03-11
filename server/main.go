@@ -39,25 +39,37 @@ type LuctusLuaStat struct {
 }
 
 type Player struct {
-	Serverid   string  `json:"serverid"  db:"serverid" binding:"required"`
-	Steamid    string  `json:"steamid"  db:"steamid"`
-	Nick       string  `json:"nick"  db:"nick"`
-	Job        string  `json:"job"  db:"job"`
-	Fpsavg     float64 `json:"fpsavg" db:"fpsavg"`
-	Fpslow     float64 `json:"fpslow" db:"fpslow"`
-	Fpshigh    float64 `json:"fpshigh" db:"fpshigh"`
-	Pingavg    float64 `json:"pingavg" db:"pingavg"`
-	Pingcur    float64 `json:"pingcur" db:"pingcur"`
-	Luaramb    float64 `json:"luaramb" db:"luaramb"`
-	Luarama    float64 `json:"luarama" db:"luarama"`
-	Os         string  `json:"os" form:"os"`
-	Country    string  `json:"country" db:"country"`
-	Screensize string  `json:"screensize" db:"screensize"`
-	Screenmode string  `json:"screenmode" db:"screenmode"`
-	Jitver     string  `json:"jitver" db:"jitver"`
-	Ip         string  `json:"ip" db:"ip"`
-	Playtime   float64 `json:"playtime" db:"playtime"`
-	Online     bool    `json:"online" db:"online"`
+	Serverid               string  `json:"serverid"  db:"serverid" binding:"required"`
+	Steamid                string  `json:"steamid"  db:"steamid"`
+	Nick                   string  `json:"nick"  db:"nick"`
+	Job                    string  `json:"job"  db:"job"`
+	Fpsavg                 float64 `json:"fpsavg" db:"fpsavg"`
+	Fpslow                 float64 `json:"fpslow" db:"fpslow"`
+	Fpshigh                float64 `json:"fpshigh" db:"fpshigh"`
+	Pingavg                float64 `json:"pingavg" db:"pingavg"`
+	Pingcur                float64 `json:"pingcur" db:"pingcur"`
+	Luaramb                float64 `json:"luaramb" db:"luaramb"`
+	Luarama                float64 `json:"luarama" db:"luarama"`
+	Packetslost            float64 `json:"packetslost" db:"packetslost"`
+	Os                     string  `json:"os" form:"os"`
+	Country                string  `json:"country" db:"country"`
+	Screensize             string  `json:"screensize" db:"screensize"`
+	Screenmode             string  `json:"screenmode" db:"screenmode"`
+	Jitver                 string  `json:"jitver" db:"jitver"`
+	Ip                     string  `json:"ip" db:"ip"`
+	Playtime               float64 `json:"playtime" db:"playtime"`
+	Playtimel              float64 `json:"playtimel" db:"playtimel"`
+	Online                 bool    `json:"online" db:"online"`
+	Hookthink              float64 `json:"hookthink" db:"hookthink"`
+	Hooktick               float64 `json:"hooktick" db:"hooktick"`
+	Hookhudpaint           float64 `json:"hookhudpaint" db:"hookhudpaint"`
+	Hookhudpaintbackground float64 `json:"hookhudpaintbackground" db:"hookhudpaintbackground"`
+	Hookpredrawhud         float64 `json:"hookpredrawhud" db:"hookpredrawhud"`
+	Hookcreatemove         float64 `json:"hookcreatemove" db:"hookcreatemove"`
+	Concommands            float64 `json:"concommands" db:"concommands"`
+	Funccount              float64 `json:"funccount" db:"funccount"`
+	Addoncount             float64 `json:"addoncount" db:"addoncount"`
+	Addonsize              float64 `json:"addonsize" db:"addonsize"`
 }
 
 type LuctusLuaStatExtra struct {
@@ -252,6 +264,7 @@ func InitDatabase(conString string) {
     pingcur INT,
     luaramb INT,
     luarama INT,
+    packetslost INT,
     os VARCHAR(10),
     country VARCHAR(4),
     screensize VARCHAR(15),
@@ -259,7 +272,18 @@ func InitDatabase(conString string) {
     jitver VARCHAR(20),
     ip VARCHAR(25),
     playtime INT,
-    online BOOL
+    playtimel INT,
+    online BOOL,
+    hookthink INT,
+    hooktick INT,
+    hookhudpaint INT,
+    hookhudpaintbackground INT,
+    hookpredrawhud INT,
+    hookcreatemove INT,
+    concommands INT,
+    funccount INT,
+    addoncount INT,
+    addonsize INT
     )`)
 
 	db.MustExec(`CREATE TABLE IF NOT EXISTS weaponkills(
@@ -337,7 +361,7 @@ func InsertLuaStat(serverip string, ls LuctusLuaStat) {
 	}
 	debugPrint("["+ls.Serverid+"]", "Current players:", len(ls.Players))
 	if len(ls.Players) > 0 {
-		_, err = db.NamedExec("INSERT INTO luaplayer (serverid,serverip,steamid,nick,job,fpsavg,fpslow,fpshigh,pingavg,pingcur,luaramb,luarama,os,country,screensize,screenmode,jitver,ip,playtime,online) VALUES (:serverid, '"+serverip+"', :steamid, :nick, :job, :fpsavg, :fpslow, :fpshigh, :pingavg, :pingcur, :luaramb, :luarama, :os, :country, :screensize, :screenmode, :jitver, :ip, :playtime, :online)", ls.Players)
+		_, err = db.NamedExec("INSERT INTO luaplayer (serverid,serverip,steamid,nick,job,fpsavg,fpslow,fpshigh,pingavg,pingcur,luaramb,luarama,packetslost,os,country,screensize,screenmode,jitver,ip,playtime,playtimel,online,hookthink,hooktick,hookhudpaint,hookhudpaintbackground,hookpredrawhud,hookcreatemove,concommands,funccount,addoncount,addonsize) VALUES (:serverid, '"+serverip+"', :steamid, :nick, :job, :fpsavg, :fpslow, :fpshigh, :pingavg, :pingcur, :luaramb, :luarama, :packetslost, :os, :country, :screensize, :screenmode, :jitver, :ip, :playtime, :playtimel, :online, :hookthink, :hooktick, :hookhudpaint, :hookhudpaintbackground, :hookpredrawhud, :hookcreatemove, :concommands, :funccount, :addoncount, :addonsize)", ls.Players)
 		if err != nil {
 			panic(err)
 		}

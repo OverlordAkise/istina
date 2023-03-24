@@ -22,7 +22,7 @@ func debugPrint(a ...any) (n int, err error) {
 func main() {
 	fmt.Println("Starting up...")
 	gin.SetMode(gin.ReleaseMode)
-	InitDatabase("beagle:beagle@tcp(localhost:3306)/istina")
+	InitDatabase("USER:PW@tcp(localhost:3306)/DBNAME")
 	r := gin.Default()
 	r.GET("/", func(c *gin.Context) {
 		c.String(200, "OK")
@@ -33,6 +33,13 @@ func main() {
 	})
 	r.GET("/debugoff", func(c *gin.Context) {
 		LUCTUSDEBUG = false
+		c.String(200, "OK")
+	})
+	r.POST("/tttstat", func(c *gin.Context) {
+		var data TTTStat
+		c.BindJSON(&data)
+		data.Serverip = c.ClientIP()
+		InsertTTTStat(data)
 		c.String(200, "OK")
 	})
 	r.POST("/linuxstat", func(c *gin.Context) {
@@ -211,7 +218,90 @@ func InitDatabase(conString string) {
     msg TEXT
     )`)
 
-	fmt.Println("DB initialized...")
+	///TTT
+
+	db.MustExec(`CREATE TABLE IF NOT EXISTS tttserver(
+    id SERIAL,
+    ts TIMESTAMP,
+    serverid VARCHAR(50),
+    serverip VARCHAR(50),
+    map VARCHAR(50),
+    gamemode VARCHAR(20),
+    roundstate INT,
+    roundid VARCHAR(20),
+    roundresult INT,
+    tickrateset INT,
+    tickratecur INT,
+    entscount INT,
+    plycount INT,
+    avgfps INT,
+    avgping INT,
+    luaramb INT,
+    luarama INT,
+    innocent INT,
+    traitor INT,
+    detective INT,
+    spectator INT,
+    ainnocent INT,
+    atraitor INT,
+    adetective INT
+    )`)
+
+	db.MustExec(`CREATE TABLE IF NOT EXISTS tttplayer(
+    id SERIAL,
+    ts TIMESTAMP,
+    serverid VARCHAR(50),
+    steamid VARCHAR(50),
+    nick VARCHAR(50),
+    role VARCHAR(20),
+    roundstate INT,
+    roundid VARCHAR(20),
+    fpsavg INT,
+    fpslow INT,
+    fpshigh INT,
+    pingavg INT,
+    pingcur INT,
+    luaramb INT,
+    luarama INT,
+    packetslost INT,
+    os VARCHAR(10),
+    country VARCHAR(4),
+    screensize VARCHAR(15),
+    screenmode VARCHAR(15),
+    jitver VARCHAR(20),
+    ip VARCHAR(25),
+    playtime INT,
+    hookcount INT,
+    hookthink INT,
+    hooktick INT,
+    hookhudpaint INT,
+    hookhudpaintbackground INT,
+    hookpredrawhud INT,
+    hookcreatemove INT,
+    concommands INT,
+    funccount INT,
+    addoncount INT,
+    addonsize INT,
+    svcheats VARCHAR(5),
+    hosttimescale VARCHAR(5),
+    svallowcslua VARCHAR(5),
+    vcollidewireframe VARCHAR(5)
+    )`)
+
+	db.MustExec(`CREATE TABLE IF NOT EXISTS tttkills(
+    id SERIAL,
+    ts TIMESTAMP,
+    serverid VARCHAR(50),
+    roundstate INT,
+    roundid VARCHAR(20),
+    wepclass VARCHAR(255),
+    victim VARCHAR(50),
+    attacker VARCHAR(50),
+    victimrole VARCHAR(20),
+    attackerrole VARCHAR(20)
+    )`)
+
+	fmt.Println("DB initialized!")
 }
 
 func InsertLinuxStats(ls LuctusLinuxStat) {
@@ -237,7 +327,7 @@ func InsertLuaError(ls LuctusLuaError) {
 func InsertDarkRPStat(ls DarkRPStat) {
 	debugPrint("["+ls.Serverid+"]", ">>> InsertLuaStat")
 	debugPrint("["+ls.Serverid+"]", ls)
-	_, err := db.NamedExec("INSERT INTO luastate(serverid,serverip,map,gamemode,tickrateset,tickratecur,entscount,plycount,avgfps,avgping,luaramb,luarama) VALUES(:serverid,:serverip,:map,:gamemode,:tickrateset,:tickratecur,:entscount,:plycount,:avgfps,:avgping,:luaramb,:luarama)", ls)
+	_, err := db.NamedExec("INSERT INTO luastate(serverid,serverip,map,gamemode,tickrateset,tickratecur,entscount,plycount,uptime,avgfps,avgping,luaramb,luarama) VALUES(:serverid,:serverip,:map,:gamemode,:tickrateset,:tickratecur,:entscount,:plycount,:uptime,:avgfps,:avgping,:luaramb,:luarama)", ls)
 	if err != nil {
 		panic(err)
 	}
@@ -302,4 +392,28 @@ func InsertLuctusLogs(ll LuctusLogs) {
 	tx.Commit()
 
 	debugPrint("["+ll.Serverid+"]", "<<< InsertLuctusLogs")
+}
+
+func InsertTTTStat(data TTTStat) {
+	debugPrint("["+data.Serverid+"]", ">>> InsertTTTStat")
+	debugPrint("["+data.Serverid+"]", "All data:", data)
+	_, err := db.NamedExec("INSERT INTO tttserver(serverid,serverip,map,gamemode,roundstate,roundid,roundresult,tickrateset,tickratecur,entscount,plycount,avgfps,avgping,luaramb,luarama,innocent,traitor,detective,spectator,ainnocent,atraitor,adetective) VALUES(:serverid,:serverip,:map,:gamemode,:roundstate,:roundid,:roundresult,:tickrateset,:tickratecur,:entscount,:plycount,:avgfps,:avgping,:luaramb,:luarama,:innocent,:traitor,:detective,:spectator,:ainnocent,:atraitor,:adetective)", data)
+	if err != nil {
+		panic(err)
+	}
+	debugPrint("["+data.Serverid+"]", "Current players:", len(data.Players))
+	if len(data.Players) > 0 {
+		_, err = db.NamedExec("INSERT INTO tttplayer (serverid,steamid,nick,role,roundstate,roundid,fpsavg,fpslow,fpshigh,pingavg,pingcur,luaramb,luarama,packetslost,os,country,screensize,screenmode,jitver,ip,playtime,hookcount,hookthink,hooktick,hookhudpaint,hookhudpaintbackground,hookpredrawhud,hookcreatemove,concommands,funccount,addoncount,addonsize,svcheats,hosttimescale,svallowcslua,vcollidewireframe) VALUES (:serverid,:steamid,:nick,:role,:roundstate,:roundid,:fpsavg,:fpslow,:fpshigh,:pingavg,:pingcur,:luaramb,:luarama,:packetslost,:os,:country,:screensize,:screenmode,:jitver,:ip,:playtime,:hookcount,:hookthink,:hooktick,:hookhudpaint,:hookhudpaintbackground,:hookpredrawhud,:hookcreatemove,:concommands,:funccount,:addoncount,:addonsize,:svcheats,:hosttimescale,:svallowcslua,:vcollidewireframe)", data.Players)
+		if err != nil {
+			panic(err)
+		}
+	}
+	debugPrint("["+data.Serverid+"]", "Kills:", len(data.Kills))
+	if len(data.Kills) > 0 {
+		_, err = db.NamedExec("INSERT INTO tttkills (serverid,roundstate,roundid,wepclass,victim,attacker,victimrole,attackerrole) VALUES (:serverid,:roundstate,:roundid,:wepclass,:victim,:attacker,:victimrole,:attackerrole)", data.Kills)
+		if err != nil {
+			panic(err)
+		}
+	}
+	debugPrint("["+data.Serverid+"]", "<<< InsertTTTStat")
 }

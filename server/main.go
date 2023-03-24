@@ -5,10 +5,19 @@ import (
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
+	//Config file
+	"io/ioutil"
+	"sigs.k8s.io/yaml"
 )
 
-var db *sqlx.DB
+type Config struct {
+	Mysql string `json:"mysql"`
+	Port  string `json:"port"`
+	Debug bool   `json:"debug"`
+}
 
+var db *sqlx.DB
+var config Config
 var LUCTUSDEBUG bool = false
 
 func debugPrint(a ...any) (n int, err error) {
@@ -20,9 +29,19 @@ func debugPrint(a ...any) (n int, err error) {
 }
 
 func main() {
-	fmt.Println("Starting up...")
+	fmt.Println("Starting!")
+	configfile, err := ioutil.ReadFile("./config.yaml")
+	if err != nil {
+		panic(err)
+	}
+	err = yaml.Unmarshal(configfile, &config)
+	if err != nil {
+		panic(err)
+	}
+	LUCTUSDEBUG = config.Debug
+	fmt.Println("Debug mode:", LUCTUSDEBUG)
 	gin.SetMode(gin.ReleaseMode)
-	InitDatabase("USER:PW@tcp(localhost:3306)/DBNAME")
+	InitDatabase(config.Mysql)
 	r := gin.Default()
 	r.GET("/", func(c *gin.Context) {
 		c.String(200, "OK")
@@ -84,8 +103,8 @@ func main() {
 		InsertLuctusLogs(ll)
 		c.String(200, "OK")
 	})
-	fmt.Println("Running...")
-	r.Run("0.0.0.0:7077")
+	fmt.Println("Now listening on *:" + config.Port)
+	r.Run("0.0.0.0:" + config.Port)
 }
 
 func InitDatabase(conString string) {

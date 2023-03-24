@@ -9,118 +9,6 @@ import (
 
 var db *sqlx.DB
 
-type LuctusLinuxStat struct {
-	Serverip        string  `json:"serverip"`
-	CpuIdle         int     `json:"cpuidle"`
-	CpuSteal        float64 `json:"cpusteal"`
-	CpuIowait       float64 `json:"cpuiowait"`
-	RamTotal        int     `json:"ramtotal"`
-	RamUsed         int     `json:"ramused"`
-	RamFree         int     `json:"ramfree"`
-	DiskTotal       int     `json:"disktotal"`
-	DiskUsed        int     `json:"diskused"`
-	DiskFree        int     `json:"diskfree"`
-	DiskPercentUsed int     `json:"diskpercentused"`
-}
-
-type LuctusLuaStat struct {
-	Serverid    string   `json:"serverid" db:"serverid" binding:"required"`
-	Map         string   `json:"map" db:"map"`
-	Gamemode    string   `json:"gamemode" db:"gamemode"`
-	Tickrateset float64  `json:"tickrateset" db:"tickrateset"`
-	Tickratecur float64  `json:"tickratecur" db:"tickratecur"`
-	Entscount   float64  `json:"entscount" db:"entscount"`
-	Plycount    float64  `json:"plycount" db:"plycount"`
-	Avgfps      float64  `json:"avgfps" db:"avgfps"`
-	Avgping     float64  `json:"avgping" db:"avgping"`
-	Luaramb     float64  `json:"luaramb" db:"luaramb"`
-	Luarama     float64  `json:"luarama" db:"luarama"`
-	Players     []Player `json:"players" db:"players"`
-}
-
-type Player struct {
-	Serverid               string  `json:"serverid"  db:"serverid" binding:"required"`
-	Steamid                string  `json:"steamid"  db:"steamid"`
-	Nick                   string  `json:"nick"  db:"nick"`
-	Job                    string  `json:"job"  db:"job"`
-	Fpsavg                 float64 `json:"fpsavg" db:"fpsavg"`
-	Fpslow                 float64 `json:"fpslow" db:"fpslow"`
-	Fpshigh                float64 `json:"fpshigh" db:"fpshigh"`
-	Pingavg                float64 `json:"pingavg" db:"pingavg"`
-	Pingcur                float64 `json:"pingcur" db:"pingcur"`
-	Luaramb                float64 `json:"luaramb" db:"luaramb"`
-	Luarama                float64 `json:"luarama" db:"luarama"`
-	Packetslost            float64 `json:"packetslost" db:"packetslost"`
-	Os                     string  `json:"os" form:"os"`
-	Country                string  `json:"country" db:"country"`
-	Screensize             string  `json:"screensize" db:"screensize"`
-	Screenmode             string  `json:"screenmode" db:"screenmode"`
-	Jitver                 string  `json:"jitver" db:"jitver"`
-	Ip                     string  `json:"ip" db:"ip"`
-	Playtime               float64 `json:"playtime" db:"playtime"`
-	Playtimel              float64 `json:"playtimel" db:"playtimel"`
-	Online                 bool    `json:"online" db:"online"`
-	Hookthink              float64 `json:"hookthink" db:"hookthink"`
-	Hooktick               float64 `json:"hooktick" db:"hooktick"`
-	Hookhudpaint           float64 `json:"hookhudpaint" db:"hookhudpaint"`
-	Hookhudpaintbackground float64 `json:"hookhudpaintbackground" db:"hookhudpaintbackground"`
-	Hookpredrawhud         float64 `json:"hookpredrawhud" db:"hookpredrawhud"`
-	Hookcreatemove         float64 `json:"hookcreatemove" db:"hookcreatemove"`
-	Concommands            float64 `json:"concommands" db:"concommands"`
-	Funccount              float64 `json:"funccount" db:"funccount"`
-	Addoncount             float64 `json:"addoncount" db:"addoncount"`
-	Addonsize              float64 `json:"addonsize" db:"addonsize"`
-}
-
-type LuctusLuaStatExtra struct {
-	Serverid    string        `json:"serverid" db:"db" binding:"required"`
-	Weaponkills []WeaponKills `json:"weaponkills" db:"weaponkills"`
-	Jobtimes    []Jobtimes    `json:"jobtimes" db:"jobtimes"`
-	Jobswitches []Jobswitches `json:"jobswitches" db:"jobswitches"`
-}
-type WeaponKills struct {
-	Wepclass string `json:"wepclass"`
-	Victim   string `json:"victim"`
-	Attacker string `json:"attacker"`
-}
-type Jobtimes struct {
-	Jobname string  `json:"jobname"`
-	Time    float64 `json:"time"`
-}
-type Jobswitches struct {
-	Jobname string  `json:"jobname"`
-	Amount  float64 `json:"amount"`
-}
-
-type LuctusJobSyncs struct {
-	Serverid string   `json:"serverid" binding:"required"`
-	Jobnames []string `json:"jobnames"`
-}
-
-type LuctusLuaError struct {
-	Hash        string `json:"hash" form:"hash"`
-	Error       string `json:"error" form:"error"`
-	Stack       string `json:"stack" form:"stack"`
-	Addon       string `json:"addon" form:"addon"`
-	Gamemode    string `json:"gamemode" form:"gamemode"`
-	Gameversion string `json:"gmv" form:"gmv"`
-	Os          string `json:"os" form:"os"`
-	Ds          string `json:"ds" form:"ds"`
-	Realm       string `json:"realm" form:"realm"`
-	Version     string `json:"v" form:"v"`
-}
-
-type LuctusLog struct {
-	Msg  string `json:"msg" form:"msg"`
-	Date string `json:"date" form:"date"`
-	Cat  string `json:"cat" form:"cat"`
-}
-
-type LuctusLogs struct {
-	Serverid string      `json:"serverid"`
-	Logs     []LuctusLog `json:"logs" form:"logs"`
-}
-
 var LUCTUSDEBUG bool = false
 
 func debugPrint(a ...any) (n int, err error) {
@@ -134,7 +22,7 @@ func debugPrint(a ...any) (n int, err error) {
 func main() {
 	fmt.Println("Starting up...")
 	gin.SetMode(gin.ReleaseMode)
-	InitDatabase("USER:PASSWORD@tcp(localhost:3306)/DATABASENAME")
+	InitDatabase("beagle:beagle@tcp(localhost:3306)/istina")
 	r := gin.Default()
 	r.GET("/", func(c *gin.Context) {
 		c.String(200, "OK")
@@ -150,37 +38,43 @@ func main() {
 	r.POST("/linuxstat", func(c *gin.Context) {
 		var ls LuctusLinuxStat
 		c.BindJSON(&ls)
-		InsertLinuxStats(c.ClientIP(), ls)
+		ls.Realserverip = c.ClientIP()
+		InsertLinuxStats(ls)
 		c.String(200, "OK")
 	})
 	r.POST("/luaerror", func(c *gin.Context) {
 		var ls LuctusLuaError
 		c.Bind(&ls)
-		InsertLuaError(c.ClientIP(), ls)
+		ls.Serverip = c.ClientIP()
+		InsertLuaError(ls)
 		c.String(200, "OK")
 	})
 	r.POST("/luastat", func(c *gin.Context) {
-		var ls LuctusLuaStat
+		var ls DarkRPStat
 		c.BindJSON(&ls)
-		InsertLuaStat(c.ClientIP(), ls)
+		ls.Serverip = c.ClientIP()
+		InsertDarkRPStat(ls)
 		c.String(200, "OK")
 	})
 	r.POST("/luastatextra", func(c *gin.Context) {
-		var ls LuctusLuaStatExtra
+		var ls DarkRPExtraStat
 		c.BindJSON(&ls)
-		InsertLuaStatExtra(c.ClientIP(), ls)
+		ls.Serverip = c.ClientIP()
+		InsertLuaStatExtra(ls)
 		c.String(200, "OK")
 	})
 	r.POST("/luajobinit", func(c *gin.Context) {
-		var ls LuctusJobSyncs
+		var ls DarkRPJobSync
 		c.BindJSON(&ls)
-		InsertLuaJobSyncs(c.ClientIP(), ls)
+		ls.Serverip = c.ClientIP()
+		InsertLuaJobSyncs(ls)
 		c.String(200, "OK")
 	})
 	r.POST("/luctuslogs", func(c *gin.Context) {
 		var ll LuctusLogs
 		c.BindJSON(&ll)
-		InsertLuctusLogs(c.ClientIP(), ll)
+		ll.Serverip = c.ClientIP()
+		InsertLuctusLogs(ll)
 		c.String(200, "OK")
 	})
 	fmt.Println("Running...")
@@ -320,48 +214,36 @@ func InitDatabase(conString string) {
 	fmt.Println("DB initialized...")
 }
 
-func InsertLinuxStats(serverip string, ls LuctusLinuxStat) {
+func InsertLinuxStats(ls LuctusLinuxStat) {
 	debugPrint(">>> InsertLinuxStats")
 	debugPrint(ls)
-	stmt, err := db.Prepare("INSERT INTO linux(serverip,realserverip,cpuidle,cpusteal,cpuiowait,ramtotal,ramused,ramfree,diskfree,diskused,disktotal,diskpercentused) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)")
+	_, err := db.NamedExec("INSERT INTO linux(serverip,realserverip,cpuidle,cpusteal,cpuiowait,ramtotal,ramused,ramfree,diskfree,diskused,disktotal,diskpercentused) VALUES(:serverip,:realserverip,:cpuidle,:cpusteal,:cpuiowait,:ramtotal,:ramused,:ramfree,:diskfree,:diskused,:disktotal,:diskpercentused)", ls)
 	if err != nil {
-		panic(err)
-	}
-	defer stmt.Close()
-	if _, err := stmt.Exec(ls.Serverip, serverip, ls.CpuIdle, ls.CpuSteal, ls.CpuIowait, ls.RamTotal, ls.RamUsed, ls.RamFree, ls.DiskFree, ls.DiskUsed, ls.DiskTotal, ls.DiskPercentUsed); err != nil {
 		panic(err)
 	}
 	debugPrint("<<< InsertLinuxStats")
 }
 
-func InsertLuaError(serverip string, ls LuctusLuaError) {
+func InsertLuaError(ls LuctusLuaError) {
 	debugPrint(">>> InsertLuaError")
 	debugPrint(ls)
-	stmt, err := db.Prepare("INSERT INTO luaerror(serverip,hash,error,stack,addon,gamemode,gameversion,os,ds,realm,version) VALUES(?,?,?,?,?,?,?,?,?,?,?)")
+	_, err := db.NamedExec("INSERT INTO luaerror(serverip,hash,error,stack,addon,gamemode,gameversion,os,ds,realm,version) VALUES(:serverip,:hash,:error,:stack,:addon,:gamemode,:gameversion,:os,:ds,:realm,:version)", ls)
 	if err != nil {
-		panic(err)
-	}
-	defer stmt.Close()
-	if _, err := stmt.Exec(serverip, ls.Hash, ls.Error, ls.Stack, ls.Addon, ls.Gamemode, ls.Gameversion, ls.Os, ls.Ds, ls.Realm, ls.Version); err != nil {
 		panic(err)
 	}
 	debugPrint("<<< InsertLuaError")
 }
 
-func InsertLuaStat(serverip string, ls LuctusLuaStat) {
+func InsertDarkRPStat(ls DarkRPStat) {
 	debugPrint("["+ls.Serverid+"]", ">>> InsertLuaStat")
 	debugPrint("["+ls.Serverid+"]", ls)
-	stmt, err := db.Prepare("INSERT INTO luastate(serverid,serverip,map,gamemode,tickrateset,tickratecur,entscount,plycount,avgfps,avgping,luaramb,luarama) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)")
+	_, err := db.NamedExec("INSERT INTO luastate(serverid,serverip,map,gamemode,tickrateset,tickratecur,entscount,plycount,avgfps,avgping,luaramb,luarama) VALUES(:serverid,:serverip,:map,:gamemode,:tickrateset,:tickratecur,:entscount,:plycount,:avgfps,:avgping,:luaramb,:luarama)", ls)
 	if err != nil {
-		panic(err)
-	}
-	defer stmt.Close()
-	if _, err := stmt.Exec(ls.Serverid, serverip, ls.Map, ls.Gamemode, ls.Tickrateset, ls.Tickratecur, ls.Entscount, ls.Plycount, ls.Avgfps, ls.Avgping, ls.Luaramb, ls.Luarama); err != nil {
 		panic(err)
 	}
 	debugPrint("["+ls.Serverid+"]", "Current players:", len(ls.Players))
 	if len(ls.Players) > 0 {
-		_, err = db.NamedExec("INSERT INTO luaplayer (serverid,serverip,steamid,nick,job,fpsavg,fpslow,fpshigh,pingavg,pingcur,luaramb,luarama,packetslost,os,country,screensize,screenmode,jitver,ip,playtime,playtimel,online,hookthink,hooktick,hookhudpaint,hookhudpaintbackground,hookpredrawhud,hookcreatemove,concommands,funccount,addoncount,addonsize) VALUES (:serverid, '"+serverip+"', :steamid, :nick, :job, :fpsavg, :fpslow, :fpshigh, :pingavg, :pingcur, :luaramb, :luarama, :packetslost, :os, :country, :screensize, :screenmode, :jitver, :ip, :playtime, :playtimel, :online, :hookthink, :hooktick, :hookhudpaint, :hookhudpaintbackground, :hookpredrawhud, :hookcreatemove, :concommands, :funccount, :addoncount, :addonsize)", ls.Players)
+		_, err = db.NamedExec("INSERT INTO luaplayer (serverid,serverip,steamid,nick,job,fpsavg,fpslow,fpshigh,pingavg,pingcur,luaramb,luarama,packetslost,os,country,screensize,screenmode,jitver,ip,playtime,playtimel,online,hookthink,hooktick,hookhudpaint,hookhudpaintbackground,hookpredrawhud,hookcreatemove,concommands,funccount,addoncount,addonsize) VALUES (:serverid, :serverip, :steamid, :nick, :job, :fpsavg, :fpslow, :fpshigh, :pingavg, :pingcur, :luaramb, :luarama, :packetslost, :os, :country, :screensize, :screenmode, :jitver, :ip, :playtime, :playtimel, :online, :hookthink, :hooktick, :hookhudpaint, :hookhudpaintbackground, :hookpredrawhud, :hookcreatemove, :concommands, :funccount, :addoncount, :addonsize)", ls.Players)
 		if err != nil {
 			panic(err)
 		}
@@ -369,13 +251,13 @@ func InsertLuaStat(serverip string, ls LuctusLuaStat) {
 	debugPrint("["+ls.Serverid+"]", "<<< InsertLuaStat")
 }
 
-func InsertLuaStatExtra(serverip string, ls LuctusLuaStatExtra) {
+func InsertLuaStatExtra(ls DarkRPExtraStat) {
 	debugPrint("["+ls.Serverid+"]", ">>> InsertLuaStatExtra")
 	debugPrint("["+ls.Serverid+"]", "--- Weaponkills:")
 	tx := db.MustBegin()
 	for _, v := range ls.Weaponkills {
-		debugPrint("["+ls.Serverid+"]", "Inserting:", ls.Serverid, serverip, v.Wepclass, v.Victim, v.Attacker)
-		tx.MustExec("INSERT IGNORE INTO weaponkills(serverid,serverip,weaponclass,victim,attacker) VALUES(?,?,?,?,?)", ls.Serverid, serverip, v.Wepclass, v.Victim, v.Attacker)
+		debugPrint("["+ls.Serverid+"]", "Inserting:", ls.Serverid, ls.Serverip, v.Wepclass, v.Victim, v.Attacker)
+		tx.MustExec("INSERT IGNORE INTO weaponkills(serverid,serverip,weaponclass,victim,attacker) VALUES(?,?,?,?,?)", ls.Serverid, ls.Serverip, v.Wepclass, v.Victim, v.Attacker)
 	}
 	tx.Commit()
 
@@ -397,25 +279,25 @@ func InsertLuaStatExtra(serverip string, ls LuctusLuaStatExtra) {
 	debugPrint("["+ls.Serverid+"]", "<<< InsertLuaStatExtra")
 }
 
-func InsertLuaJobSyncs(serverip string, ls LuctusJobSyncs) {
+func InsertLuaJobSyncs(ls DarkRPJobSync) {
 	debugPrint("["+ls.Serverid+"]", ">>> InsertLuaJobSyncs")
 	debugPrint("["+ls.Serverid+"]", "--- Jobs:")
 	tx := db.MustBegin()
 	for _, v := range ls.Jobnames {
-		debugPrint("["+ls.Serverid+"]", "Inserting:", ls.Serverid, serverip, v, 0, 0)
-		tx.MustExec("INSERT IGNORE INTO jobstats(serverid,serverip,jobname,switchedto,timespent) VALUES(?,?,?,?,?)", ls.Serverid, serverip, v, 0, 0)
+		debugPrint("["+ls.Serverid+"]", "Inserting:", ls.Serverid, ls.Serverip, v, 0, 0)
+		tx.MustExec("INSERT IGNORE INTO jobstats(serverid,serverip,jobname,switchedto,timespent) VALUES(?,?,?,?,?)", ls.Serverid, ls.Serverip, v, 0, 0)
 	}
 	tx.Commit()
 	debugPrint("["+ls.Serverid+"]", "<<< InsertLuaJobSyncs")
 }
 
-func InsertLuctusLogs(serverip string, ll LuctusLogs) {
+func InsertLuctusLogs(ll LuctusLogs) {
 	debugPrint("["+ll.Serverid+"]", ">>> InsertLuctusLogs")
 	debugPrint("["+ll.Serverid+"]", "--- LogLines:", len(ll.Logs))
 	tx := db.MustBegin()
 	for _, v := range ll.Logs {
-		debugPrint("["+ll.Serverid+"]", "Inserting:", ll.Serverid, serverip, v.Date, v.Cat, v.Msg)
-		tx.MustExec("INSERT IGNORE INTO luctuslog(serverid,serverip,date,cat,msg) VALUES(?,?,?,?,?)", ll.Serverid, serverip, v.Date, v.Cat, v.Msg)
+		debugPrint("["+ll.Serverid+"]", "Inserting:", ll.Serverid, ll.Serverip, v.Date, v.Cat, v.Msg)
+		tx.MustExec("INSERT IGNORE INTO luctuslog(serverid,serverip,date,cat,msg) VALUES(?,?,?,?,?)", ll.Serverid, ll.Serverip, v.Date, v.Cat, v.Msg)
 	}
 	tx.Commit()
 

@@ -158,6 +158,7 @@ func InitDatabase(conString string) {
     serverid VARCHAR(50),
     serverip VARCHAR(50),
     map VARCHAR(50),
+    uptime INT,
     gamemode VARCHAR(20),
     tickrateset INT,
     tickratecur INT,

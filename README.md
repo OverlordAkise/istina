@@ -14,6 +14,10 @@ Go into the `server` folder and start the Golang application with:
 
     go get .
     go build .
+    # copy and adjust the example config:
+    cp config.example.yaml config.yaml
+    nano config.yaml
+    # then run the server with:
     ./istina
     
 Don't forget to change the database connection string on Line 114.  

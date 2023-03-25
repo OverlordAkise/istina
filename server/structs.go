@@ -16,20 +16,22 @@ type LuctusLinuxStat struct {
 }
 
 type DarkRPStat struct {
-	Serverid    string         `json:"serverid" db:"serverid" binding:"required"`
-	Serverip    string         `json:"serverip" db:"serverip"`
-	Map         string         `json:"map" db:"map"`
-	Gamemode    string         `json:"gamemode" db:"gamemode"`
-	Uptime      float64        `json:"uptime" db:"uptime"`
-	Tickrateset float64        `json:"tickrateset" db:"tickrateset"`
-	Tickratecur float64        `json:"tickratecur" db:"tickratecur"`
-	Entscount   float64        `json:"entscount" db:"entscount"`
-	Plycount    float64        `json:"plycount" db:"plycount"`
-	Avgfps      float64        `json:"avgfps" db:"avgfps"`
-	Avgping     float64        `json:"avgping" db:"avgping"`
-	Luaramb     float64        `json:"luaramb" db:"luaramb"`
-	Luarama     float64        `json:"luarama" db:"luarama"`
-	Players     []DarkRPPlayer `json:"players" db:"players"`
+	Serverid    string           `json:"serverid" db:"serverid" binding:"required"`
+	Serverip    string           `json:"serverip" db:"serverip"`
+	Map         string           `json:"map" db:"map"`
+	Gamemode    string           `json:"gamemode" db:"gamemode"`
+	Uptime      float64          `json:"uptime" db:"uptime"`
+	Tickrateset float64          `json:"tickrateset" db:"tickrateset"`
+	Tickratecur float64          `json:"tickratecur" db:"tickratecur"`
+	Entscount   float64          `json:"entscount" db:"entscount"`
+	Plycount    float64          `json:"plycount" db:"plycount"`
+	Avgfps      float64          `json:"avgfps" db:"avgfps"`
+	Avgping     float64          `json:"avgping" db:"avgping"`
+	Luaramb     float64          `json:"luaramb" db:"luaramb"`
+	Luarama     float64          `json:"luarama" db:"luarama"`
+	Players     []DarkRPPlayer   `json:"players" db:"players"`
+	Jobs        []DarkRPJobstats `json:"jobs" db:"jobs"`
+	Weaponkills []DarkRPKills    `json:"weaponkills" db:"weaponkills"`
 }
 
 type DarkRPPlayer struct {
@@ -66,31 +68,15 @@ type DarkRPPlayer struct {
 	Addonsize              float64 `json:"addonsize" db:"addonsize"`
 }
 
-type DarkRPExtraStat struct {
-	Serverid    string        `json:"serverid" db:"serverid" binding:"required"`
-	Serverip    string        `json:"serverip" db:"serverip"`
-	Weaponkills []WeaponKills `json:"weaponkills" db:"weaponkills"`
-	Jobtimes    []Jobtimes    `json:"jobtimes" db:"jobtimes"`
-	Jobswitches []Jobswitches `json:"jobswitches" db:"jobswitches"`
-}
-type WeaponKills struct {
+type DarkRPKills struct {
 	Wepclass string `json:"wepclass"`
 	Victim   string `json:"victim"`
 	Attacker string `json:"attacker"`
 }
-type Jobtimes struct {
-	Jobname string  `json:"jobname"`
-	Time    float64 `json:"time"`
-}
-type Jobswitches struct {
-	Jobname string  `json:"jobname"`
-	Amount  float64 `json:"amount"`
-}
-
-type DarkRPJobSync struct {
-	Serverid string   `json:"serverid" binding:"required"`
-	Serverip string   `json:"serverip" db:"serverip"`
-	Jobnames []string `json:"jobnames"`
+type DarkRPJobstats struct {
+	Jobname  string  `json:"jobname" db:"jobname"`
+	Switches float64 `json:"switches" db:"switches"`
+	Playtime float64 `json:"playtime" db:"playtime"`
 }
 
 type LuctusLuaError struct {

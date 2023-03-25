@@ -75,25 +75,11 @@ func main() {
 		InsertLuaError(ls)
 		c.String(200, "OK")
 	})
-	r.POST("/luastat", func(c *gin.Context) {
+	r.POST("/darkrpstat", func(c *gin.Context) {
 		var ls DarkRPStat
 		c.BindJSON(&ls)
 		ls.Serverip = c.ClientIP()
 		InsertDarkRPStat(ls)
-		c.String(200, "OK")
-	})
-	r.POST("/luastatextra", func(c *gin.Context) {
-		var ls DarkRPExtraStat
-		c.BindJSON(&ls)
-		ls.Serverip = c.ClientIP()
-		InsertLuaStatExtra(ls)
-		c.String(200, "OK")
-	})
-	r.POST("/luajobinit", func(c *gin.Context) {
-		var ls DarkRPJobSync
-		c.BindJSON(&ls)
-		ls.Serverip = c.ClientIP()
-		InsertLuaJobSyncs(ls)
 		c.String(200, "OK")
 	})
 	r.POST("/luctuslogs", func(c *gin.Context) {
@@ -352,64 +338,31 @@ func InsertDarkRPStat(ls DarkRPStat) {
 	if err != nil {
 		panic(err)
 	}
-	debugPrint("["+ls.Serverid+"]", "Current players:", len(ls.Players))
+	debugPrint("["+ls.Serverid+"]", "--- DarkRP players", len(ls.Players))
 	if len(ls.Players) > 0 {
 		_, err = tx.NamedExec("INSERT INTO luaplayer (serverid,serverip,steamid,nick,job,fpsavg,fpslow,fpshigh,pingavg,pingcur,luaramb,luarama,packetslost,os,country,screensize,screenmode,jitver,ip,playtime,playtimel,online,hookthink,hooktick,hookhudpaint,hookhudpaintbackground,hookpredrawhud,hookcreatemove,concommands,funccount,addoncount,addonsize) VALUES (:serverid, '"+ls.Serverip+"', :steamid, :nick, :job, :fpsavg, :fpslow, :fpshigh, :pingavg, :pingcur, :luaramb, :luarama, :packetslost, :os, :country, :screensize, :screenmode, :jitver, :ip, :playtime, :playtimel, :online, :hookthink, :hooktick, :hookhudpaint, :hookhudpaintbackground, :hookpredrawhud, :hookcreatemove, :concommands, :funccount, :addoncount, :addonsize)", ls.Players)
 		if err != nil {
 			panic(err)
 		}
 	}
+
+	debugPrint("["+ls.Serverid+"]", "--- Weaponkills:")
+	for _, v := range ls.Weaponkills {
+		debugPrint("["+ls.Serverid+"]", "Inserting:", ls.Serverid, ls.Serverip, v.Wepclass, v.Victim, v.Attacker)
+		tx.MustExec("INSERT IGNORE INTO weaponkills(serverid,serverip,weaponclass,victim,attacker) VALUES(?,?,?,?,?)", ls.Serverid, ls.Serverip, v.Wepclass, v.Victim, v.Attacker)
+	}
+
+	debugPrint("["+ls.Serverid+"]", "--- Jobstats:")
+	for _, v := range ls.Jobs {
+		debugPrint("["+ls.Serverid+"]", "Inserting:", v)
+		tx.MustExec("INSERT INTO jobstats(serverid,serverip,jobname,switchedto,timespent) VALUES(?,?,?,?,?) ON DUPLICATE KEY UPDATE switchedto=switchedto+?, timespent=timespent+?;", ls.Serverid, ls.Serverip, v.Jobname, v.Switches, v.Playtime, v.Switches, v.Playtime)
+	}
+
 	err = tx.Commit()
 	if err != nil {
 		panic(err)
 	}
 	debugPrint("["+ls.Serverid+"]", "<<< InsertLuaStat")
-}
-
-func InsertLuaStatExtra(ls DarkRPExtraStat) {
-	debugPrint("["+ls.Serverid+"]", ">>> InsertLuaStatExtra")
-	debugPrint("["+ls.Serverid+"]", "--- Weaponkills:")
-	tx := db.MustBegin()
-	for _, v := range ls.Weaponkills {
-		debugPrint("["+ls.Serverid+"]", "Inserting:", ls.Serverid, ls.Serverip, v.Wepclass, v.Victim, v.Attacker)
-		tx.MustExec("INSERT IGNORE INTO weaponkills(serverid,serverip,weaponclass,victim,attacker) VALUES(?,?,?,?,?)", ls.Serverid, ls.Serverip, v.Wepclass, v.Victim, v.Attacker)
-	}
-	tx.Commit()
-
-	debugPrint("["+ls.Serverid+"]", "--- Jobplaytimes:")
-	tx = db.MustBegin()
-	for _, v := range ls.Jobtimes {
-		debugPrint("["+ls.Serverid+"]", "Inserting:", v.Time, v.Jobname, ls.Serverid)
-		tx.MustExec("UPDATE jobstats SET timespent = timespent + ? WHERE jobname = ? and serverid = ?", v.Time, v.Jobname, ls.Serverid)
-	}
-	tx.Commit()
-
-	debugPrint("["+ls.Serverid+"]", "--- Jobswitches:")
-	tx = db.MustBegin()
-	for _, v := range ls.Jobswitches {
-		debugPrint("["+ls.Serverid+"]", "Inserting:", v.Amount, v.Jobname, ls.Serverid)
-		tx.MustExec("UPDATE jobstats SET switchedto = switchedto + ? WHERE jobname = ? and serverid = ?", v.Amount, v.Jobname, ls.Serverid)
-	}
-	err := tx.Commit()
-	if err != nil {
-		panic(err)
-	}
-	debugPrint("["+ls.Serverid+"]", "<<< InsertLuaStatExtra")
-}
-
-func InsertLuaJobSyncs(ls DarkRPJobSync) {
-	debugPrint("["+ls.Serverid+"]", ">>> InsertLuaJobSyncs")
-	debugPrint("["+ls.Serverid+"]", "--- Jobs:")
-	tx := db.MustBegin()
-	for _, v := range ls.Jobnames {
-		debugPrint("["+ls.Serverid+"]", "Inserting:", ls.Serverid, ls.Serverip, v, 0, 0)
-		tx.MustExec("INSERT IGNORE INTO jobstats(serverid,serverip,jobname,switchedto,timespent) VALUES(?,?,?,?,?)", ls.Serverid, ls.Serverip, v, 0, 0)
-	}
-	err := tx.Commit()
-	if err != nil {
-		panic(err)
-	}
-	debugPrint("["+ls.Serverid+"]", "<<< InsertLuaJobSyncs")
 }
 
 func InsertLuctusLogs(ll LuctusLogs) {

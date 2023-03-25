@@ -3,11 +3,9 @@
 
 --This script collects data about the server and players for analysis
 
-LUCTUS_MONITOR_DEBUG = false
+LUCTUS_MONITOR_DEBUG = true
 
 LUCTUS_MONITOR_URL = "http://localhost:7077/luastat"
-LUCTUS_MONITOR_URL_EXTRA = "http://localhost:7077/luastatextra"
-LUCTUS_MONITOR_URL_INIT = "http://localhost:7077/luajobinit"
 
 
 function LuctusDebugPrint(text)
@@ -51,11 +49,13 @@ timer.Create("luctus_monitor_autorestart",15,0,function()
     if not timer.Exists("luctus_monitor_timer") then
         print("[luctus_monitor] Starting Monitor timer")
         LuctusMonitorStart()
-        LuctusMonitorSyncJobs()
     end
 end)
 
 LUCTUS_MONITOR_PLAYERS = {}
+local jobtimes = {}
+local jobswitches = {}
+local weaponkills = {}
 
 function LuctusMonitorStart()
     timer.Create("luctus_monitor_timer",300,0,function()
@@ -65,14 +65,12 @@ function LuctusMonitorStart()
         
         timer.Simple(5,function()
             LuctusMonitorDo()
-            LuctusMonitorDoExtras()
         end)
     end)
 end
 
 hook.Add( "ShutDown", "luctus_monitor_shutdown", function()
     LuctusMonitorDo(true)
-    LuctusMonitorDoExtras()
 end)
 
 --Monitor deaths
@@ -150,6 +148,29 @@ function LuctusMonitorDo(shutdowning)
     collectgarbage("collect")
     data["luarama"] = collectgarbage("count")
     
+    
+    --Jobtimes, weaponkills
+    for k,v in pairs(player.GetAll()) do
+        local jobname = team.GetName(v:Team())
+        if not jobtimes[jobname] then
+            jobtimes[jobname] = 0
+        end
+        jobtimes[jobname] = jobtimes[jobname] + math.Round(CurTime()-v.switchedJob)
+        v.switchedJob = CurTime()
+    end
+    
+    local jobStats = {}
+    for k,v in pairs(jobtimes) do
+        table.insert(jobStats,{
+            ["jobname"] = k,
+            ["playtime"] = v,
+            ["switches"] = jobswitches[k],
+        })
+    end
+    data["weaponkills"] = weaponkills
+    data["jobs"] = jobStats
+    
+    --Sending
     local ret = HTTP({
         failed = function(failMessage)
             print("[luctus_monitor] FAILED TO POST STATS!")
@@ -171,6 +192,10 @@ function LuctusMonitorDo(shutdowning)
     LuctusDebugPrintTable(data)
     LuctusDebugPrint("Json:")
     LuctusDebugPrint(util.TableToJSON(data))
+    --reset
+    weaponkills = {}
+    jobtimes = {}
+    jobswitches = {}
     LUCTUS_MONITOR_PLAYERS = {}
     lm_deaths = 0
 end
@@ -263,8 +288,6 @@ end)
 
 
 --Extras (weaponkills, jobtime)
-
-local weaponkills = {}
 hook.Add("PlayerDeath","luctus_monitor_extra",function(victim,inflictor,attacker)
     if IsValid(attacker) and attacker:IsPlayer() and attacker:GetActiveWeapon() and IsValid(attacker:GetActiveWeapon()) then
         table.insert(weaponkills,{
@@ -284,39 +307,7 @@ hook.Add("OnNPCKilled", "luctus_monitor_extra",function(npc, attacker, inflictor
     end
 end)
 
-hook.Add("postLoadCustomDarkRPItems","luctus_monitor_extra",function()
-    LuctusMonitorSyncJobs()
-end)
 
-function LuctusMonitorSyncJobs()
-    local alljobs = {}
-    for k,v in pairs(RPExtraTeams) do
-        table.insert(alljobs,v.name)
-    end
-    local data = {
-        ["jobnames"] = alljobs,
-        ["serverid"] = LUCTUS_MONITOR_SERVER_ID,
-    }
-
-    local ret = HTTP({
-        failed = function(failMessage)
-            print("[luctus_monitor] FAILED TO POST INITJOBS!")
-            print("[luctus_monitor]",os.date("%H:%M:%S - %d/%m/%Y",os.time()))
-            print(failMessage)
-        end,
-        success = function(httpcode,body,headers)
-            LuctusDebugPrint("[luctus_monitor] DoExtras Init successfull!")
-        end, 
-        method = "POST",
-        url = LUCTUS_MONITOR_URL_INIT,
-        body = util.TableToJSON(data),
-        type = "application/json; charset=utf-8",
-        timeout = 10
-    })
-end
-
-local jobtimes = {}
-local jobswitches = {}
 
 hook.Add("PlayerInitialSpawn","luctus_monitor_extra",function(ply)
     ply.switchedJob = CurTime()
@@ -325,13 +316,13 @@ end)
 hook.Add("OnPlayerChangedTeam","luctus_monitor_extra",function(ply,before,after)
     local beforeName = team.GetName(before)
     local afterName = team.GetName(after)
-    --switched
+    --switches
     if not jobswitches[afterName] then
         jobswitches[afterName] = 1
     else
         jobswitches[afterName] = jobswitches[afterName] + 1
     end
-    --jobtime
+    --jobtimes
     if not jobtimes[beforeName] then
         jobtimes[beforeName] = 1
     end
@@ -348,69 +339,6 @@ hook.Add("PlayerDisconnect","luctus_monitor_extra",function(ply)
         jobtimes[jobname] = jobtimes[jobname] + math.Round(CurTime()-ply.switchedJob)
     end
 end)
-
-
-function LuctusMonitorDoExtras()
-    
-    for k,v in pairs(player.GetAll()) do
-        local jobname = team.GetName(v:Team())
-        if not jobtimes[jobname] then
-            jobtimes[jobname] = 0
-        end
-        jobtimes[jobname] = jobtimes[jobname] + math.Round(CurTime()-v.switchedJob)
-        v.switchedJob = CurTime()
-    end
-    
-    local jsonJobTimes = {}
-    for k,v in pairs(jobtimes) do
-        table.insert(jsonJobTimes,{
-            ["jobname"] = k,
-            ["time"] = v,
-        })
-    end
-
-    local jsonJobSwitches = {}
-    for k,v in pairs(jobswitches) do
-        table.insert(jsonJobSwitches,{
-            ["jobname"] = k,
-            ["amount"] = v,
-        })
-    end
-
-    local data = {
-        ["serverid"] = LUCTUS_MONITOR_SERVER_ID,
-        ["weaponkills"] = weaponkills,
-        ["jobtimes"] = jsonJobTimes,
-        ["jobswitches"] = jsonJobSwitches,
-    }
-    
-    local ret = HTTP({
-        failed = function(failMessage)
-            print("[luctus_monitor] FAILED TO POST STATS!")
-            print("[luctus_monitor]",os.date("%H:%M:%S - %d/%m/%Y",os.time()))
-            print(failMessage)
-        end,
-        success = function(httpcode,body,headers)
-            LuctusDebugPrint("[luctus_monitor] DoExtras Sync successfull!")
-        end, 
-        method = "POST",
-        url = LUCTUS_MONITOR_URL_EXTRA,
-        body = util.TableToJSON(data),
-        type = "application/json; charset=utf-8",
-        timeout = 10
-    })
-    
-    --reset
-    weaponkills = {}
-    jobtimes = {}
-    jobswitches = {}
-    
-    LuctusDebugPrint("(DoExtras) Sent the following:")
-    LuctusDebugPrint("Table:")
-    LuctusDebugPrintTable(data)
-    LuctusDebugPrint("Json:")
-    LuctusDebugPrint(util.TableToJSON(data))
-end
 
 print("[luctus_monitor] sv loaded!")
 

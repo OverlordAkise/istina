@@ -347,16 +347,21 @@ func InsertLuaError(ls LuctusLuaError) {
 func InsertDarkRPStat(ls DarkRPStat) {
 	debugPrint("["+ls.Serverid+"]", ">>> InsertLuaStat")
 	debugPrint("["+ls.Serverid+"]", ls)
-	_, err := db.NamedExec("INSERT INTO luastate(serverid,serverip,map,gamemode,tickrateset,tickratecur,entscount,plycount,uptime,avgfps,avgping,luaramb,luarama) VALUES(:serverid,:serverip,:map,:gamemode,:tickrateset,:tickratecur,:entscount,:plycount,:uptime,:avgfps,:avgping,:luaramb,:luarama)", ls)
+	tx := db.MustBegin()
+	_, err := tx.NamedExec("INSERT INTO luastate(serverid,serverip,map,gamemode,tickrateset,tickratecur,entscount,plycount,uptime,avgfps,avgping,luaramb,luarama) VALUES(:serverid,:serverip,:map,:gamemode,:tickrateset,:tickratecur,:entscount,:plycount,:uptime,:avgfps,:avgping,:luaramb,:luarama)", ls)
 	if err != nil {
 		panic(err)
 	}
 	debugPrint("["+ls.Serverid+"]", "Current players:", len(ls.Players))
 	if len(ls.Players) > 0 {
-		_, err = db.NamedExec("INSERT INTO luaplayer (serverid,serverip,steamid,nick,job,fpsavg,fpslow,fpshigh,pingavg,pingcur,luaramb,luarama,packetslost,os,country,screensize,screenmode,jitver,ip,playtime,playtimel,online,hookthink,hooktick,hookhudpaint,hookhudpaintbackground,hookpredrawhud,hookcreatemove,concommands,funccount,addoncount,addonsize) VALUES (:serverid, '"+ls.Serverip+"', :steamid, :nick, :job, :fpsavg, :fpslow, :fpshigh, :pingavg, :pingcur, :luaramb, :luarama, :packetslost, :os, :country, :screensize, :screenmode, :jitver, :ip, :playtime, :playtimel, :online, :hookthink, :hooktick, :hookhudpaint, :hookhudpaintbackground, :hookpredrawhud, :hookcreatemove, :concommands, :funccount, :addoncount, :addonsize)", ls.Players)
+		_, err = tx.NamedExec("INSERT INTO luaplayer (serverid,serverip,steamid,nick,job,fpsavg,fpslow,fpshigh,pingavg,pingcur,luaramb,luarama,packetslost,os,country,screensize,screenmode,jitver,ip,playtime,playtimel,online,hookthink,hooktick,hookhudpaint,hookhudpaintbackground,hookpredrawhud,hookcreatemove,concommands,funccount,addoncount,addonsize) VALUES (:serverid, '"+ls.Serverip+"', :steamid, :nick, :job, :fpsavg, :fpslow, :fpshigh, :pingavg, :pingcur, :luaramb, :luarama, :packetslost, :os, :country, :screensize, :screenmode, :jitver, :ip, :playtime, :playtimel, :online, :hookthink, :hooktick, :hookhudpaint, :hookhudpaintbackground, :hookpredrawhud, :hookcreatemove, :concommands, :funccount, :addoncount, :addonsize)", ls.Players)
 		if err != nil {
 			panic(err)
 		}
+	}
+	err = tx.Commit()
+	if err != nil {
+		panic(err)
 	}
 	debugPrint("["+ls.Serverid+"]", "<<< InsertLuaStat")
 }
@@ -385,7 +390,10 @@ func InsertLuaStatExtra(ls DarkRPExtraStat) {
 		debugPrint("["+ls.Serverid+"]", "Inserting:", v.Amount, v.Jobname, ls.Serverid)
 		tx.MustExec("UPDATE jobstats SET switchedto = switchedto + ? WHERE jobname = ? and serverid = ?", v.Amount, v.Jobname, ls.Serverid)
 	}
-	tx.Commit()
+	err := tx.Commit()
+	if err != nil {
+		panic(err)
+	}
 	debugPrint("["+ls.Serverid+"]", "<<< InsertLuaStatExtra")
 }
 
@@ -397,7 +405,10 @@ func InsertLuaJobSyncs(ls DarkRPJobSync) {
 		debugPrint("["+ls.Serverid+"]", "Inserting:", ls.Serverid, ls.Serverip, v, 0, 0)
 		tx.MustExec("INSERT IGNORE INTO jobstats(serverid,serverip,jobname,switchedto,timespent) VALUES(?,?,?,?,?)", ls.Serverid, ls.Serverip, v, 0, 0)
 	}
-	tx.Commit()
+	err := tx.Commit()
+	if err != nil {
+		panic(err)
+	}
 	debugPrint("["+ls.Serverid+"]", "<<< InsertLuaJobSyncs")
 }
 
@@ -409,7 +420,10 @@ func InsertLuctusLogs(ll LuctusLogs) {
 		debugPrint("["+ll.Serverid+"]", "Inserting:", ll.Serverid, ll.Serverip, v.Date, v.Cat, v.Msg)
 		tx.MustExec("INSERT IGNORE INTO luctuslog(serverid,serverip,date,cat,msg) VALUES(?,?,?,?,?)", ll.Serverid, ll.Serverip, v.Date, v.Cat, v.Msg)
 	}
-	tx.Commit()
+	err := tx.Commit()
+	if err != nil {
+		panic(err)
+	}
 
 	debugPrint("["+ll.Serverid+"]", "<<< InsertLuctusLogs")
 }
@@ -417,23 +431,30 @@ func InsertLuctusLogs(ll LuctusLogs) {
 func InsertTTTStat(data TTTStat) {
 	debugPrint("["+data.Serverid+"]", ">>> InsertTTTStat")
 	debugPrint("["+data.Serverid+"]", "All data:", data)
-	_, err := db.NamedExec("INSERT INTO tttserver(serverid,serverip,map,gamemode,roundstate,roundid,roundresult,tickrateset,tickratecur,entscount,plycount,avgfps,avgping,luaramb,luarama,innocent,traitor,detective,spectator,ainnocent,atraitor,adetective) VALUES(:serverid,:serverip,:map,:gamemode,:roundstate,:roundid,:roundresult,:tickrateset,:tickratecur,:entscount,:plycount,:avgfps,:avgping,:luaramb,:luarama,:innocent,:traitor,:detective,:spectator,:ainnocent,:atraitor,:adetective)", data)
+	tx := db.MustBegin()
+	_, err := tx.NamedExec("INSERT INTO tttserver(serverid,serverip,map,gamemode,roundstate,roundid,roundresult,tickrateset,tickratecur,entscount,plycount,avgfps,avgping,luaramb,luarama,innocent,traitor,detective,spectator,ainnocent,atraitor,adetective) VALUES(:serverid,:serverip,:map,:gamemode,:roundstate,:roundid,:roundresult,:tickrateset,:tickratecur,:entscount,:plycount,:avgfps,:avgping,:luaramb,:luarama,:innocent,:traitor,:detective,:spectator,:ainnocent,:atraitor,:adetective)", data)
 	if err != nil {
 		panic(err)
 	}
+
 	debugPrint("["+data.Serverid+"]", "Current players:", len(data.Players))
 	if len(data.Players) > 0 {
-		_, err = db.NamedExec("INSERT INTO tttplayer (serverid,steamid,nick,role,roundstate,roundid,fpsavg,fpslow,fpshigh,pingavg,pingcur,luaramb,luarama,packetslost,os,country,screensize,screenmode,jitver,ip,playtime,hookcount,hookthink,hooktick,hookhudpaint,hookhudpaintbackground,hookpredrawhud,hookcreatemove,concommands,funccount,addoncount,addonsize,svcheats,hosttimescale,svallowcslua,vcollidewireframe) VALUES (:serverid,:steamid,:nick,:role,:roundstate,:roundid,:fpsavg,:fpslow,:fpshigh,:pingavg,:pingcur,:luaramb,:luarama,:packetslost,:os,:country,:screensize,:screenmode,:jitver,:ip,:playtime,:hookcount,:hookthink,:hooktick,:hookhudpaint,:hookhudpaintbackground,:hookpredrawhud,:hookcreatemove,:concommands,:funccount,:addoncount,:addonsize,:svcheats,:hosttimescale,:svallowcslua,:vcollidewireframe)", data.Players)
+		_, err = tx.NamedExec("INSERT INTO tttplayer (serverid,steamid,nick,role,roundstate,roundid,fpsavg,fpslow,fpshigh,pingavg,pingcur,luaramb,luarama,packetslost,os,country,screensize,screenmode,jitver,ip,playtime,hookcount,hookthink,hooktick,hookhudpaint,hookhudpaintbackground,hookpredrawhud,hookcreatemove,concommands,funccount,addoncount,addonsize,svcheats,hosttimescale,svallowcslua,vcollidewireframe) VALUES (:serverid,:steamid,:nick,:role,:roundstate,:roundid,:fpsavg,:fpslow,:fpshigh,:pingavg,:pingcur,:luaramb,:luarama,:packetslost,:os,:country,:screensize,:screenmode,:jitver,:ip,:playtime,:hookcount,:hookthink,:hooktick,:hookhudpaint,:hookhudpaintbackground,:hookpredrawhud,:hookcreatemove,:concommands,:funccount,:addoncount,:addonsize,:svcheats,:hosttimescale,:svallowcslua,:vcollidewireframe)", data.Players)
 		if err != nil {
 			panic(err)
 		}
 	}
+
 	debugPrint("["+data.Serverid+"]", "Kills:", len(data.Kills))
 	if len(data.Kills) > 0 {
-		_, err = db.NamedExec("INSERT INTO tttkills (serverid,roundstate,roundid,wepclass,victim,attacker,victimrole,attackerrole) VALUES (:serverid,:roundstate,:roundid,:wepclass,:victim,:attacker,:victimrole,:attackerrole)", data.Kills)
+		_, err = tx.NamedExec("INSERT INTO tttkills (serverid,roundstate,roundid,wepclass,victim,attacker,victimrole,attackerrole) VALUES (:serverid,:roundstate,:roundid,:wepclass,:victim,:attacker,:victimrole,:attackerrole)", data.Kills)
 		if err != nil {
 			panic(err)
 		}
+	}
+	err = tx.Commit()
+	if err != nil {
+		panic(err)
 	}
 	debugPrint("["+data.Serverid+"]", "<<< InsertTTTStat")
 }

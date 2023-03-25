@@ -49,14 +49,14 @@ util.AddNetworkString("luctus_monitor_collect")
 LUCTUS_MONITOR_PLAYERS = {}
 LUCTUS_MONITOR_ROUNDID = os.date("%Y%m%d%H%M%S",os.time())
 
-function LuctusMonitorStart(delay)
+function LuctusMonitorStart(delay,result)
     LuctusMonitorGetRoles()
     timer.Simple(delay,function()
         LuctusMonitorGetPlayers()
         GetCurrentTickrate()
     end)
     timer.Simple(delay+1,function()
-        LuctusMonitorSend()
+        LuctusMonitorSend(result)
     end)
 end
 

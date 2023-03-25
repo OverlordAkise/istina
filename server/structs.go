@@ -115,7 +115,7 @@ type TTTStat struct {
 	Map         string      `json:"map" db:"map"`
 	Gamemode    string      `json:"gamemode" db:"gamemode"`
 	Roundstate  float64     `json:"roundstate" db:"roundstate"`
-	Roundid     float64     `json:"roundid" db:"roundid"`
+	Roundid     string      `json:"roundid" db:"roundid"`
 	Roundresult float64     `json:"roundresult" db:"roundresult"`
 	Tickrateset float64     `json:"tickrateset" db:"tickrateset"`
 	Tickratecur float64     `json:"tickratecur" db:"tickratecur"`
@@ -141,8 +141,8 @@ type TTTPlayer struct {
 	Steamid                string  `json:"steamid"  db:"steamid"`
 	Nick                   string  `json:"nick"  db:"nick"`
 	Role                   string  `json:"role"  db:"role"`
+	Roundid                string  `json:"roundid" db:"roundid"`
 	Roundstate             float64 `json:"roundstate" db:"roundstate"`
-	Roundid                float64 `json:"roundid" db:"roundid"`
 	Fpsavg                 float64 `json:"fpsavg" db:"fpsavg"`
 	Fpslow                 float64 `json:"fpslow" db:"fpslow"`
 	Fpshigh                float64 `json:"fpshigh" db:"fpshigh"`
@@ -177,8 +177,8 @@ type TTTPlayer struct {
 
 type TTTKills struct {
 	Serverid     string  `json:"serverid"  db:"serverid" binding:"required"`
+	Roundid      string  `json:"roundid" db:"roundid"`
 	Roundstate   float64 `json:"roundstate" db:"roundstate"`
-	Roundid      float64 `json:"roundid" db:"roundid"`
 	Wepclass     string  `json:"wepclass" db:"wepclass"`
 	Victim       string  `json:"victim" db:"victim"`
 	Attacker     string  `json:"attacker" db:"attacker"`

@@ -49,14 +49,14 @@ util.AddNetworkString("luctus_monitor_collect")
 LUCTUS_MONITOR_PLAYERS = {}
 LUCTUS_MONITOR_ROUNDID = os.date("%Y%m%d%H%M%S",os.time())
 
-function LuctusMonitorStart(delay,result)
+function LuctusMonitorStart(delay,result,roundstate)
     LuctusMonitorGetRoles()
     timer.Simple(delay,function()
         LuctusMonitorGetPlayers()
         GetCurrentTickrate()
     end)
     timer.Simple(delay+1,function()
-        LuctusMonitorSend(result)
+        LuctusMonitorSend(result,roundstate)
     end)
 end
 
@@ -65,18 +65,17 @@ function LuctusMonitorGetPlayers()
     net.Broadcast()
 end
 
-
 --Hooks for sending stats
 hook.Add("TTTPrepareRound","luctus_monitor",function()
-    LuctusMonitorStart(5,-1) --longer due to sweps spawning
+    LuctusMonitorStart(5,-1,2) --longer due to sweps spawning
 end)
 
 hook.Add("TTTBeginRound","luctus_monitor",function()
-    LuctusMonitorStart(3,-1)
+    LuctusMonitorStart(3,-1,3)
 end)
 
 hook.Add("TTTEndRound","luctus_monitor",function(result)
-    LuctusMonitorStart(3,result)
+    LuctusMonitorStart(3,result,4)
 end)
 
 
@@ -137,7 +136,7 @@ function LuctusMonitorGetRoles()
     end
 end
 
-function LuctusMonitorSend(roundResult)
+function LuctusMonitorSend(roundResult,roundstate)
     if GetRoundState() == 2 then
         LUCTUS_MONITOR_ROUNDID = os.date("%Y%m%d%H%M%S",os.time())
     end
@@ -153,13 +152,13 @@ function LuctusMonitorSend(roundResult)
         server_avgping_c = server_avgping_c + 1
         server_avgfps_c = server_avgfps_c + 1
         v["serverid"] = LUCTUS_MONITOR_SERVER_ID
-        v["roundstate"] = GetRoundState()
+        v["roundstate"] = roundstate
         v["roundid"] = LUCTUS_MONITOR_ROUNDID
         table.insert(data["players"],v)
     end
     data["gamemode"] = engine.ActiveGamemode()
     data["map"] = game.GetMap()
-    data["roundstate"] = GetRoundState()
+    data["roundstate"] = roundstate
     data["tickrateset"] = 1/engine.TickInterval()
     data["tickratecur"] = LUCTUS_MONITOR_CURRENT_TICKRATE
     data["entscount"] = #ents.GetAll()

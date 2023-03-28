@@ -28,20 +28,7 @@ func debugPrint(a ...any) (n int, err error) {
 	}
 }
 
-func main() {
-	fmt.Println("Starting!")
-	configfile, err := ioutil.ReadFile("./config.yaml")
-	if err != nil {
-		panic(err)
-	}
-	err = yaml.Unmarshal(configfile, &config)
-	if err != nil {
-		panic(err)
-	}
-	LUCTUSDEBUG = config.Debug
-	fmt.Println("Debug mode:", LUCTUSDEBUG)
-	gin.SetMode(gin.ReleaseMode)
-	InitDatabase(config.Mysql)
+func SetupRouter() *gin.Engine {
 	r := gin.Default()
 	r.GET("/", func(c *gin.Context) {
 		c.String(200, "OK")
@@ -89,6 +76,24 @@ func main() {
 		InsertLuctusLogs(ll)
 		c.String(200, "OK")
 	})
+	return r
+}
+
+func main() {
+	fmt.Println("Starting!")
+	configfile, err := ioutil.ReadFile("./config.yaml")
+	if err != nil {
+		panic(err)
+	}
+	err = yaml.Unmarshal(configfile, &config)
+	if err != nil {
+		panic(err)
+	}
+	LUCTUSDEBUG = config.Debug
+	fmt.Println("Debug mode:", LUCTUSDEBUG)
+	gin.SetMode(gin.ReleaseMode)
+	InitDatabase(config.Mysql)
+	r := SetupRouter()
 	fmt.Println("Now listening on *:" + config.Port)
 	r.Run("0.0.0.0:" + config.Port)
 }

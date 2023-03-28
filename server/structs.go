@@ -16,6 +16,8 @@ type LuctusLinuxStat struct {
 }
 
 type DarkRPStat struct {
+	Id          float64          `json:"id" db:"id"`
+	Ts          string           `json:"ts" db:"ts"`
 	Serverid    string           `json:"serverid" db:"serverid" binding:"required"`
 	Serverip    string           `json:"serverip" db:"serverip"`
 	Map         string           `json:"map" db:"map"`
@@ -110,6 +112,8 @@ type LuctusLogs struct {
 ///// TTT
 
 type TTTStat struct {
+	Id          float64     `json:"id" db:"id"`
+	Ts          string      `json:"ts" db:"ts"`
 	Serverid    string      `json:"serverid" db:"serverid" binding:"required"`
 	Serverip    string      `json:"serverip" db:"serverip"`
 	Map         string      `json:"map" db:"map"`

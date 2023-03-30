@@ -165,7 +165,6 @@ func InitDatabase(conString string) {
     id SERIAL,
     ts TIMESTAMP,
     serverid VARCHAR(50),
-    serverip VARCHAR(50),
     steamid VARCHAR(50),
     nick VARCHAR(50),
     job VARCHAR(50),
@@ -202,7 +201,6 @@ func InitDatabase(conString string) {
     id SERIAL,
     ts TIMESTAMP,
     serverid VARCHAR(50),
-    serverip VARCHAR(50),
     weaponclass VARCHAR(255),
     victim VARCHAR(50),
     attacker VARCHAR(50)
@@ -212,12 +210,13 @@ func InitDatabase(conString string) {
     id SERIAL,
     ts TIMESTAMP,
     serverid VARCHAR(50),
-    serverip VARCHAR(50),
     jobname VARCHAR(255),
     switchedto BIGINT,
     timespent BIGINT,
     unique(serverid,jobname)
     )`)
+    
+    ///Logs
 
 	db.MustExec(`CREATE TABLE IF NOT EXISTS luctuslog(
     id SERIAL,
@@ -345,7 +344,7 @@ func InsertDarkRPStat(ls DarkRPStat) {
 	}
 	debugPrint("["+ls.Serverid+"]", "--- DarkRP players", len(ls.Players))
 	if len(ls.Players) > 0 {
-		_, err = tx.NamedExec("INSERT INTO luaplayer (serverid,serverip,steamid,nick,job,fpsavg,fpslow,fpshigh,pingavg,pingcur,luaramb,luarama,packetslost,os,country,screensize,screenmode,jitver,ip,playtime,playtimel,online,hookthink,hooktick,hookhudpaint,hookhudpaintbackground,hookpredrawhud,hookcreatemove,concommands,funccount,addoncount,addonsize) VALUES (:serverid, '"+ls.Serverip+"', :steamid, :nick, :job, :fpsavg, :fpslow, :fpshigh, :pingavg, :pingcur, :luaramb, :luarama, :packetslost, :os, :country, :screensize, :screenmode, :jitver, :ip, :playtime, :playtimel, :online, :hookthink, :hooktick, :hookhudpaint, :hookhudpaintbackground, :hookpredrawhud, :hookcreatemove, :concommands, :funccount, :addoncount, :addonsize)", ls.Players)
+		_, err = tx.NamedExec("INSERT INTO luaplayer (serverid,steamid,nick,job,fpsavg,fpslow,fpshigh,pingavg,pingcur,luaramb,luarama,packetslost,os,country,screensize,screenmode,jitver,ip,playtime,playtimel,online,hookthink,hooktick,hookhudpaint,hookhudpaintbackground,hookpredrawhud,hookcreatemove,concommands,funccount,addoncount,addonsize) VALUES (:serverid, :steamid, :nick, :job, :fpsavg, :fpslow, :fpshigh, :pingavg, :pingcur, :luaramb, :luarama, :packetslost, :os, :country, :screensize, :screenmode, :jitver, :ip, :playtime, :playtimel, :online, :hookthink, :hooktick, :hookhudpaint, :hookhudpaintbackground, :hookpredrawhud, :hookcreatemove, :concommands, :funccount, :addoncount, :addonsize)", ls.Players)
 		if err != nil {
 			panic(err)
 		}
@@ -353,14 +352,14 @@ func InsertDarkRPStat(ls DarkRPStat) {
 
 	debugPrint("["+ls.Serverid+"]", "--- Weaponkills:")
 	for _, v := range ls.Weaponkills {
-		debugPrint("["+ls.Serverid+"]", "Inserting:", ls.Serverid, ls.Serverip, v.Wepclass, v.Victim, v.Attacker)
-		tx.MustExec("INSERT IGNORE INTO weaponkills(serverid,serverip,weaponclass,victim,attacker) VALUES(?,?,?,?,?)", ls.Serverid, ls.Serverip, v.Wepclass, v.Victim, v.Attacker)
+		debugPrint("["+ls.Serverid+"]", "Inserting:", ls.Serverid, v.Wepclass, v.Victim, v.Attacker)
+		tx.MustExec("INSERT IGNORE INTO weaponkills(serverid,weaponclass,victim,attacker) VALUES(?,?,?,?)", ls.Serverid,v.Wepclass, v.Victim, v.Attacker)
 	}
 
 	debugPrint("["+ls.Serverid+"]", "--- Jobstats:")
 	for _, v := range ls.Jobs {
 		debugPrint("["+ls.Serverid+"]", "Inserting:", v)
-		tx.MustExec("INSERT INTO jobstats(serverid,serverip,jobname,switchedto,timespent) VALUES(?,?,?,?,?) ON DUPLICATE KEY UPDATE switchedto=switchedto+?, timespent=timespent+?;", ls.Serverid, ls.Serverip, v.Jobname, v.Switches, v.Playtime, v.Switches, v.Playtime)
+		tx.MustExec("INSERT INTO jobstats(serverid,jobname,switchedto,timespent) VALUES(?,?,?,?) ON DUPLICATE KEY UPDATE switchedto=switchedto+?, timespent=timespent+?;", ls.Serverid, v.Jobname, v.Switches, v.Playtime, v.Switches, v.Playtime)
 	}
 
 	err = tx.Commit()

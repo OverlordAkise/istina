@@ -43,35 +43,50 @@ func SetupRouter() *gin.Engine {
 	})
 	r.POST("/tttstat", func(c *gin.Context) {
 		var data TTTStat
-		c.BindJSON(&data)
+		err := c.BindJSON(&data)
+		if err != nil {
+			return
+		}
 		data.Serverip = c.ClientIP()
 		InsertTTTStat(data)
 		c.String(200, "OK")
 	})
 	r.POST("/linuxstat", func(c *gin.Context) {
 		var ls LuctusLinuxStat
-		c.BindJSON(&ls)
+		err := c.BindJSON(&ls)
+		if err != nil {
+			return
+		}
 		ls.Realserverip = c.ClientIP()
 		InsertLinuxStats(ls)
 		c.String(200, "OK")
 	})
 	r.POST("/luaerror", func(c *gin.Context) {
 		var ls LuctusLuaError
-		c.Bind(&ls)
+		err := c.BindJSON(&ls)
+		if err != nil {
+			return
+		}
 		ls.Serverip = c.ClientIP()
 		InsertLuaError(ls)
 		c.String(200, "OK")
 	})
 	r.POST("/darkrpstat", func(c *gin.Context) {
 		var ls DarkRPStat
-		c.BindJSON(&ls)
+		err := c.BindJSON(&ls)
+		if err != nil {
+			return
+		}
 		ls.Serverip = c.ClientIP()
 		InsertDarkRPStat(ls)
 		c.String(200, "OK")
 	})
 	r.POST("/luctuslogs", func(c *gin.Context) {
 		var ll LuctusLogs
-		c.BindJSON(&ll)
+		err := c.BindJSON(&ll)
+		if err != nil {
+			return
+		}
 		ll.Serverip = c.ClientIP()
 		InsertLuctusLogs(ll)
 		c.String(200, "OK")
@@ -215,8 +230,8 @@ func InitDatabase(conString string) {
     timespent BIGINT,
     unique(serverid,jobname)
     )`)
-    
-    ///Logs
+
+	///Logs
 
 	db.MustExec(`CREATE TABLE IF NOT EXISTS luctuslog(
     id SERIAL,
@@ -353,7 +368,7 @@ func InsertDarkRPStat(ls DarkRPStat) {
 	debugPrint("["+ls.Serverid+"]", "--- Weaponkills:")
 	for _, v := range ls.Weaponkills {
 		debugPrint("["+ls.Serverid+"]", "Inserting:", ls.Serverid, v.Wepclass, v.Victim, v.Attacker)
-		tx.MustExec("INSERT IGNORE INTO weaponkills(serverid,weaponclass,victim,attacker) VALUES(?,?,?,?)", ls.Serverid,v.Wepclass, v.Victim, v.Attacker)
+		tx.MustExec("INSERT IGNORE INTO weaponkills(serverid,weaponclass,victim,attacker) VALUES(?,?,?,?)", ls.Serverid, v.Wepclass, v.Victim, v.Attacker)
 	}
 
 	debugPrint("["+ls.Serverid+"]", "--- Jobstats:")

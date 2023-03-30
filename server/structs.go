@@ -37,8 +37,8 @@ type DarkRPStat struct {
 }
 
 type DarkRPPlayer struct {
-	Id          float64          `json:"id" db:"id"`
-	Ts          string           `json:"ts" db:"ts"`
+	Id                     float64 `json:"id" db:"id"`
+	Ts                     string  `json:"ts" db:"ts"`
 	Serverid               string  `json:"serverid"  db:"serverid" binding:"required"`
 	Steamid                string  `json:"steamid"  db:"steamid"`
 	Nick                   string  `json:"nick"  db:"nick"`
@@ -143,8 +143,8 @@ type TTTStat struct {
 }
 
 type TTTPlayer struct {
-	Id          float64          `json:"id" db:"id"`
-	Ts          string           `json:"ts" db:"ts"`
+	Id                     float64 `json:"id" db:"id"`
+	Ts                     string  `json:"ts" db:"ts"`
 	Serverid               string  `json:"serverid"  db:"serverid" binding:"required"`
 	Steamid                string  `json:"steamid"  db:"steamid"`
 	Nick                   string  `json:"nick"  db:"nick"`

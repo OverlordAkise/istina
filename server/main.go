@@ -30,6 +30,7 @@ func debugPrint(a ...any) (n int, err error) {
 
 func SetupRouter() *gin.Engine {
 	r := gin.Default()
+	RegisterMetrics(r)
 	r.GET("/", func(c *gin.Context) {
 		c.String(200, "OK")
 	})

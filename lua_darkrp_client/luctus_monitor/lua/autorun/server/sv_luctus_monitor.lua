@@ -3,9 +3,9 @@
 
 --This script collects data about the server and players for analysis
 
-LUCTUS_MONITOR_DEBUG = true
+LUCTUS_MONITOR_DEBUG = false
 
-LUCTUS_MONITOR_URL = "http://localhost:7077/luastat"
+LUCTUS_MONITOR_URL = "http://localhost:7077/darkrpstat"
 
 
 function LuctusDebugPrint(text)
@@ -44,6 +44,7 @@ concommand.Add("m_monitor", function(ply,cmd,args)
 end)
 
 util.AddNetworkString("luctus_monitor_collect")
+util.AddNetworkString("luctus_monitor_connecttime")
 
 timer.Create("luctus_monitor_autorestart",15,0,function()
     if not timer.Exists("luctus_monitor_timer") then
@@ -56,6 +57,8 @@ LUCTUS_MONITOR_PLAYERS = {}
 local jobtimes = {}
 local jobswitches = {}
 local weaponkills = {}
+local luctusPlyCache = {}
+local luctusJoins = {}
 
 function LuctusMonitorStart()
     timer.Create("luctus_monitor_timer",300,0,function()
@@ -169,6 +172,7 @@ function LuctusMonitorDo(shutdowning)
     end
     data["weaponkills"] = weaponkills
     data["jobs"] = jobStats
+    data["joinstats"] = luctusJoins
     
     --Sending
     local ret = HTTP({
@@ -179,6 +183,8 @@ function LuctusMonitorDo(shutdowning)
         end,
         success = function(httpcode,body,headers)
             LuctusDebugPrint("[luctus_monitor] Do Sync successfull!")
+            LuctusDebugPrint("[luctus_monitor] HTTP code:",httpcode)
+            LuctusDebugPrint("[luctus_monitor] Body:",body)
         end, 
         method = "POST",
         url = LUCTUS_MONITOR_URL,
@@ -196,6 +202,7 @@ function LuctusMonitorDo(shutdowning)
     weaponkills = {}
     jobtimes = {}
     jobswitches = {}
+    luctusJoins = {}
     LUCTUS_MONITOR_PLAYERS = {}
     lm_deaths = 0
 end
@@ -337,6 +344,35 @@ hook.Add("PlayerDisconnect","luctus_monitor_extra",function(ply)
             jobtimes[jobname] = 0
         end
         jobtimes[jobname] = jobtimes[jobname] + math.Round(CurTime()-ply.switchedJob)
+    end
+end)
+
+--Joinstats
+
+gameevent.Listen("player_connect")
+hook.Add("player_connect", "luctus_monitor_connecttime", function(data)
+	luctusPlyCache[data.networkid] = CurTime()
+end)
+net.Receive("luctus_monitor_connecttime",function(len,ply)
+    local sid = ply:SteamID()
+    if luctusPlyCache[sid] then
+        table.insert(luctusJoins,{
+            ["steamid"] = sid,
+            ["jointime"] = CurTime() - luctusPlyCache[sid],
+            ["connected"] = true
+        })
+        luctusPlyCache[sid] = nil
+    end
+end)
+hook.Add("PlayerDisconnected","luctus_monitor_connecttime",function(ply)
+    local sid = ply:SteamID()
+    if luctusPlyCache[sid] then
+        table.insert(luctusJoins,{
+            ["steamid"] = sid,
+            ["jointime"] = CurTime() - luctusPlyCache[sid],
+            ["connected"] = false
+        })
+        luctusPlyCache[sid] = nil
     end
 end)
 

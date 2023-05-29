@@ -34,6 +34,7 @@ type DarkRPStat struct {
 	Players     []DarkRPPlayer   `json:"players" db:"players"`
 	Jobs        []DarkRPJobstats `json:"jobs" db:"jobs"`
 	Weaponkills []DarkRPKills    `json:"weaponkills" db:"weaponkills"`
+	Joinstats   []Joinstatistic  `json:"joinstats" db:"joinstats"`
 }
 
 type DarkRPPlayer struct {
@@ -81,6 +82,11 @@ type DarkRPJobstats struct {
 	Jobname  string  `json:"jobname" db:"jobname"`
 	Switches float64 `json:"switches" db:"switches"`
 	Playtime float64 `json:"playtime" db:"playtime"`
+}
+type Joinstatistic struct {
+	Steamid   string  `json:"steamid" db:"steamid"`
+	Jointime  float64 `json:"jointime" db:"jointime"`
+	Connected bool    `json:"connected" db:"connected"`
 }
 
 type LuctusLuaError struct {

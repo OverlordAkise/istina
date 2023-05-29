@@ -8,6 +8,7 @@ import (
 	//Config file
 	"io/ioutil"
 	"sigs.k8s.io/yaml"
+	//"bytes"
 )
 
 type Config struct {
@@ -75,6 +76,7 @@ func SetupRouter() *gin.Engine {
 		var ls DarkRPStat
 		err := c.BindJSON(&ls)
 		if err != nil {
+			fmt.Println("ERROR DURING BindJSON darkrpstat: ", err.Error())
 			return
 		}
 		ls.Serverip = c.ClientIP()
@@ -326,6 +328,17 @@ func InitDatabase(conString string) {
     attackerrole VARCHAR(20)
     )`)
 
+	///Joinstats
+
+	db.MustExec(`CREATE TABLE IF NOT EXISTS joinstats(
+    id SERIAL,
+    ts TIMESTAMP,
+    serverid VARCHAR(50),
+    steamid VARCHAR(50),
+    jointime BIGINT,
+    connected BOOL
+    )`)
+
 	fmt.Println("DB initialized!")
 }
 
@@ -375,6 +388,12 @@ func InsertDarkRPStat(ls DarkRPStat) {
 	for _, v := range ls.Jobs {
 		debugPrint("["+ls.Serverid+"]", "Inserting:", v)
 		tx.MustExec("INSERT INTO jobstats(serverid,jobname,switchedto,timespent) VALUES(?,?,?,?) ON DUPLICATE KEY UPDATE switchedto=switchedto+?, timespent=timespent+?;", ls.Serverid, v.Jobname, v.Switches, v.Playtime, v.Switches, v.Playtime)
+	}
+
+	debugPrint("["+ls.Serverid+"]", "--- Joinstats:")
+	for _, v := range ls.Joinstats {
+		debugPrint("["+ls.Serverid+"]", "Inserting:", v)
+		tx.MustExec("INSERT INTO joinstats(serverid,steamid,jointime,connected) VALUES(?,?,?,?)", ls.Serverid, v.Steamid, v.Jointime, v.Connected)
 	}
 
 	err = tx.Commit()

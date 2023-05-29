@@ -112,4 +112,10 @@ function LuctusGetOS()
     return "unknown"
 end
 
+--Joinstats
+hook.Add("InitPostEntity", "luctus_monitor_connecttime", function()
+	net.Start("luctus_monitor_connecttime")
+	net.SendToServer()
+end)
+
 print("[luctus_monitor] cl loaded!")

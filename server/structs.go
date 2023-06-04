@@ -103,6 +103,14 @@ type LuctusLuaError struct {
 	Version     string `json:"v" form:"v" db:"v"`
 }
 
+///// Discord Webhook Message
+
+type DiscordMessage struct {
+    Url string `json:"url" form:"url"`
+    Tag string `json:"tag" form:"tag"`
+    Msg string `json:"msg" form:"msg"`
+}
+
 ///// Logs
 
 type LuctusLog struct {

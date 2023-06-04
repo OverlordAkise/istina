@@ -8,7 +8,11 @@ import (
 	//Config file
 	"io/ioutil"
 	"sigs.k8s.io/yaml"
-	//"bytes"
+    //Discord Webhooks
+    "bytes"
+    "encoding/json"
+    "net/http"
+    "regexp"
 )
 
 type Config struct {
@@ -20,6 +24,8 @@ type Config struct {
 var db *sqlx.DB
 var config Config
 var LUCTUSDEBUG bool = false
+var httpclient = http.Client{}
+var discordURLRegex = regexp.MustCompile("^https:\\/\\/discord.com\\/api\\/webhooks\\/\\d+\\/[-_a-zA-Z0-9]+$")
 
 func debugPrint(a ...any) (n int, err error) {
 	if LUCTUSDEBUG == true {
@@ -46,6 +52,7 @@ func SetupRouter() *gin.Engine {
 		var data TTTStat
 		err := c.BindJSON(&data)
 		if err != nil {
+            c.String(400, "INVALID DATA")
 			return
 		}
 		data.Serverip = c.ClientIP()
@@ -56,6 +63,7 @@ func SetupRouter() *gin.Engine {
 		var ls LuctusLinuxStat
 		err := c.BindJSON(&ls)
 		if err != nil {
+            c.String(400, "INVALID DATA")
 			return
 		}
 		ls.Realserverip = c.ClientIP()
@@ -66,6 +74,7 @@ func SetupRouter() *gin.Engine {
 		var ls LuctusLuaError
 		err := c.BindJSON(&ls)
 		if err != nil {
+            c.String(400, "INVALID DATA")
 			return
 		}
 		ls.Serverip = c.ClientIP()
@@ -76,7 +85,7 @@ func SetupRouter() *gin.Engine {
 		var ls DarkRPStat
 		err := c.BindJSON(&ls)
 		if err != nil {
-			fmt.Println("ERROR DURING BindJSON darkrpstat: ", err.Error())
+			c.String(400, "INVALID DATA")
 			return
 		}
 		ls.Serverip = c.ClientIP()
@@ -87,12 +96,27 @@ func SetupRouter() *gin.Engine {
 		var ll LuctusLogs
 		err := c.BindJSON(&ll)
 		if err != nil {
+            c.String(400, "INVALID DATA")
 			return
 		}
 		ll.Serverip = c.ClientIP()
 		InsertLuctusLogs(ll)
 		c.String(200, "OK")
 	})
+    r.POST("/discordmsg", func(c *gin.Context) {
+        var dc DiscordMessage
+        err := c.BindJSON(&dc)
+        if err != nil {
+            panic(err)
+        }
+        debugPrint("/discordmsg", c.ClientIP(), dc.Tag, dc.Msg, dc.Url)
+        if !discordURLRegex.MatchString(dc.Url) {
+            c.String(400, "INVALID URL")
+            return
+        }
+        NotifyDiscordWebhook(dc)
+        c.String(200, "OK")
+    })
 	return r
 }
 
@@ -448,4 +472,23 @@ func InsertTTTStat(data TTTStat) {
 		panic(err)
 	}
 	debugPrint("["+data.Serverid+"]", "<<< InsertTTTStat")
+}
+
+func NotifyDiscordWebhook(dc DiscordMessage) {
+    data := map[string]interface{}{
+        "content": "[" + dc.Tag + "] " + dc.Msg,
+    }
+    jsonData, err := json.Marshal(data)
+    if err != nil {
+        panic(err)
+    }
+    req, err := http.NewRequest("POST", dc.Url, bytes.NewReader(jsonData))
+    if err != nil {
+        panic(err)
+    }
+    req.Header.Add("Content-Type", "application/json")
+    _, err = httpclient.Do(req)
+    if err != nil {
+        panic(err)
+    }
 }

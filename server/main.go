@@ -52,6 +52,7 @@ func SetupRouter() *gin.Engine {
 		var data TTTStat
 		err := c.BindJSON(&data)
 		if err != nil {
+            fmt.Println(err)
 			c.String(400, "INVALID DATA")
 			return
 		}
@@ -63,6 +64,7 @@ func SetupRouter() *gin.Engine {
 		var ls LuctusLinuxStat
 		err := c.BindJSON(&ls)
 		if err != nil {
+            fmt.Println(err)
 			c.String(400, "INVALID DATA")
 			return
 		}
@@ -74,6 +76,7 @@ func SetupRouter() *gin.Engine {
 		var ls LuctusLuaError
 		err := c.BindJSON(&ls)
 		if err != nil {
+            fmt.Println(err)
 			c.String(400, "INVALID DATA")
 			return
 		}
@@ -85,6 +88,7 @@ func SetupRouter() *gin.Engine {
 		var ls DarkRPStat
 		err := c.BindJSON(&ls)
 		if err != nil {
+            fmt.Println(err)
 			c.String(400, "INVALID DATA")
 			return
 		}
@@ -96,6 +100,7 @@ func SetupRouter() *gin.Engine {
 		var ll LuctusLogs
 		err := c.BindJSON(&ll)
 		if err != nil {
+            fmt.Println(err)
 			c.String(400, "INVALID DATA")
 			return
 		}
@@ -107,10 +112,12 @@ func SetupRouter() *gin.Engine {
 		var dc DiscordMessage
 		err := c.BindJSON(&dc)
 		if err != nil {
-			panic(err)
+			fmt.Println(err)
+            c.String(400, "INVALID DATA")
 		}
 		debugPrint("/discordmsg", c.ClientIP(), dc.Tag, dc.Msg, dc.Url)
 		if !discordURLRegex.MatchString(dc.Url) {
+            fmt.Println("REGEX MISMATCH")
 			c.String(400, "INVALID URL")
 			return
 		}

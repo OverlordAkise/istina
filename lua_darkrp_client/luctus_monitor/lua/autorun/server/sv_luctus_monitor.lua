@@ -57,8 +57,9 @@ LUCTUS_MONITOR_PLAYERS = {}
 local jobtimes = {}
 local jobswitches = {}
 local weaponkills = {}
-local luctusPlyCache = {}
+local luctusJoinCache = {}
 local luctusJoins = {}
+local luctusBans = {}
 
 function LuctusMonitorStart()
     timer.Create("luctus_monitor_timer",300,0,function()
@@ -173,6 +174,7 @@ function LuctusMonitorDo(shutdowning)
     data["weaponkills"] = weaponkills
     data["jobs"] = jobStats
     data["joinstats"] = luctusJoins
+    data["bans"] = luctusBans
     
     --Sending
     local ret = HTTP({
@@ -203,6 +205,7 @@ function LuctusMonitorDo(shutdowning)
     jobtimes = {}
     jobswitches = {}
     luctusJoins = {}
+    luctusBans = {}
     LUCTUS_MONITOR_PLAYERS = {}
     lm_deaths = 0
 end
@@ -294,7 +297,8 @@ net.Receive("luctus_monitor_collect",function(len,ply)
 end)
 
 
---Extras (weaponkills, jobtime)
+--Weaponkills
+
 hook.Add("PlayerDeath","luctus_monitor_extra",function(victim,inflictor,attacker)
     if IsValid(attacker) and attacker:IsPlayer() and attacker:GetActiveWeapon() and IsValid(attacker:GetActiveWeapon()) then
         table.insert(weaponkills,{
@@ -315,6 +319,7 @@ hook.Add("OnNPCKilled", "luctus_monitor_extra",function(npc, attacker, inflictor
 end)
 
 
+--Jobstats
 
 hook.Add("PlayerInitialSpawn","luctus_monitor_extra",function(ply)
     ply.switchedJob = CurTime()
@@ -347,34 +352,55 @@ hook.Add("PlayerDisconnect","luctus_monitor_extra",function(ply)
     end
 end)
 
+
 --Joinstats
 
 gameevent.Listen("player_connect")
 hook.Add("player_connect", "luctus_monitor_connecttime", function(data)
-	luctusPlyCache[data.networkid] = CurTime()
+	luctusJoinCache[data.networkid] = CurTime()
 end)
 net.Receive("luctus_monitor_connecttime",function(len,ply)
     local sid = ply:SteamID()
-    if luctusPlyCache[sid] then
+    if luctusJoinCache[sid] then
         table.insert(luctusJoins,{
             ["steamid"] = sid,
-            ["jointime"] = CurTime() - luctusPlyCache[sid],
+            ["jointime"] = CurTime() - luctusJoinCache[sid],
             ["connected"] = true
         })
-        luctusPlyCache[sid] = nil
+        luctusJoinCache[sid] = nil
     end
 end)
 hook.Add("PlayerDisconnected","luctus_monitor_connecttime",function(ply)
     local sid = ply:SteamID()
-    if luctusPlyCache[sid] then
+    if luctusJoinCache[sid] then
         table.insert(luctusJoins,{
             ["steamid"] = sid,
-            ["jointime"] = CurTime() - luctusPlyCache[sid],
+            ["jointime"] = CurTime() - luctusJoinCache[sid],
             ["connected"] = false
         })
-        luctusPlyCache[sid] = nil
+        luctusJoinCache[sid] = nil
     end
 end)
 
-print("[luctus_monitor] sv loaded!")
 
+-- Bans
+
+hook.Add("ULibPlayerBanned","luctus_monitor_bans",function(steamid,bandata)
+    local callerName = "<server>"
+    if bandata and bandata.admin then
+        callerName = bandata.admin
+    end
+    local bantime = 0
+    if bandata.unban != 0 then
+        bantime = bandata.unban - bandata.time
+    end
+    table.insert(luctusBans,{
+        ["admin"] = callerName,
+        ["target"] = steamid,
+        ["reason"] = bandata.reason,
+        ["bantime"] = bantime,
+        ["curtime"] = tonumber(bandata.time), --why is time a string?
+    })
+end)
+
+print("[luctus_monitor] sv loaded!")

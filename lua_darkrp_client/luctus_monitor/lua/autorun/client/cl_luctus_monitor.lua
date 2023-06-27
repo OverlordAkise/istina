@@ -69,8 +69,8 @@ function SendStatistics()
     net.SendToServer()
     
     --reset fps
-    fps_all = 1 / RealFrameTime()
-    fps_count = 1
+    fps_all = 0
+    fps_count = 0
     fps_lowest = 999
     fps_highest = 0
     --reset ping
@@ -82,9 +82,9 @@ timer.Create("luctus_monitor_timer",10,0,function()
     if not LocalPlayer() or not IsValid(LocalPlayer()) then return end
     if not system.HasFocus() then return end --tabbed out
     --fps
-    fps_count = fps_count + 1
     local fps = 1 / RealFrameTime()
     if fps < 1 then return end --too early
+    fps_count = fps_count + 1
     fps_all = fps_all + fps
     if fps > fps_highest then
         fps_highest = fps

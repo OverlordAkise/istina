@@ -52,7 +52,7 @@ func SetupRouter() *gin.Engine {
 		var data TTTStat
 		err := c.BindJSON(&data)
 		if err != nil {
-            fmt.Println(err)
+			fmt.Println(err)
 			c.String(400, "INVALID DATA")
 			return
 		}
@@ -64,7 +64,7 @@ func SetupRouter() *gin.Engine {
 		var ls LuctusLinuxStat
 		err := c.BindJSON(&ls)
 		if err != nil {
-            fmt.Println(err)
+			fmt.Println(err)
 			c.String(400, "INVALID DATA")
 			return
 		}
@@ -76,7 +76,7 @@ func SetupRouter() *gin.Engine {
 		var ls LuctusLuaError
 		err := c.BindJSON(&ls)
 		if err != nil {
-            fmt.Println(err)
+			fmt.Println(err)
 			c.String(400, "INVALID DATA")
 			return
 		}
@@ -88,7 +88,7 @@ func SetupRouter() *gin.Engine {
 		var ls DarkRPStat
 		err := c.BindJSON(&ls)
 		if err != nil {
-            fmt.Println(err)
+			fmt.Println(err)
 			c.String(400, "INVALID DATA")
 			return
 		}
@@ -100,7 +100,7 @@ func SetupRouter() *gin.Engine {
 		var ll LuctusLogs
 		err := c.BindJSON(&ll)
 		if err != nil {
-            fmt.Println(err)
+			fmt.Println(err)
 			c.String(400, "INVALID DATA")
 			return
 		}
@@ -113,11 +113,11 @@ func SetupRouter() *gin.Engine {
 		err := c.BindJSON(&dc)
 		if err != nil {
 			fmt.Println(err)
-            c.String(400, "INVALID DATA")
+			c.String(400, "INVALID DATA")
 		}
 		debugPrint("/discordmsg", c.ClientIP(), dc.Tag, dc.Msg, dc.Url)
 		if !discordURLRegex.MatchString(dc.Url) {
-            fmt.Println("REGEX MISMATCH")
+			fmt.Println("REGEX MISMATCH")
 			c.String(400, "INVALID URL")
 			return
 		}
@@ -242,7 +242,8 @@ func InitDatabase(conString string) {
     concommands INT,
     funccount INT,
     addoncount INT,
-    addonsize INT
+    addonsize INT,
+    warns INT
     )`)
 
 	db.MustExec(`CREATE TABLE IF NOT EXISTS weaponkills(
@@ -414,7 +415,7 @@ func InsertDarkRPStat(ls DarkRPStat) {
 	}
 	debugPrint("["+ls.Serverid+"]", "--- DarkRP players", len(ls.Players))
 	if len(ls.Players) > 0 {
-		_, err = tx.NamedExec("INSERT INTO luaplayer (serverid,steamid,nick,job,fpsavg,fpslow,fpshigh,pingavg,pingcur,luaramb,luarama,packetslost,os,country,screensize,screenmode,jitver,ip,playtime,playtimel,online,hookthink,hooktick,hookhudpaint,hookhudpaintbackground,hookpredrawhud,hookcreatemove,concommands,funccount,addoncount,addonsize) VALUES (:serverid, :steamid, :nick, :job, :fpsavg, :fpslow, :fpshigh, :pingavg, :pingcur, :luaramb, :luarama, :packetslost, :os, :country, :screensize, :screenmode, :jitver, :ip, :playtime, :playtimel, :online, :hookthink, :hooktick, :hookhudpaint, :hookhudpaintbackground, :hookpredrawhud, :hookcreatemove, :concommands, :funccount, :addoncount, :addonsize)", ls.Players)
+		_, err = tx.NamedExec("INSERT INTO luaplayer (serverid,steamid,nick,job,fpsavg,fpslow,fpshigh,pingavg,pingcur,luaramb,luarama,packetslost,os,country,screensize,screenmode,jitver,ip,playtime,playtimel,online,hookthink,hooktick,hookhudpaint,hookhudpaintbackground,hookpredrawhud,hookcreatemove,concommands,funccount,addoncount,addonsize, warns) VALUES (:serverid, :steamid, :nick, :job, :fpsavg, :fpslow, :fpshigh, :pingavg, :pingcur, :luaramb, :luarama, :packetslost, :os, :country, :screensize, :screenmode, :jitver, :ip, :playtime, :playtimel, :online, :hookthink, :hooktick, :hookhudpaint, :hookhudpaintbackground, :hookpredrawhud, :hookcreatemove, :concommands, :funccount, :addoncount, :addonsize, :warns)", ls.Players)
 		if err != nil {
 			panic(err)
 		}

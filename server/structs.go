@@ -35,6 +35,7 @@ type DarkRPStat struct {
 	Jobs        []DarkRPJobstats `json:"jobs" db:"jobs"`
 	Weaponkills []DarkRPKills    `json:"weaponkills" db:"weaponkills"`
 	Joinstats   []Joinstatistic  `json:"joinstats" db:"joinstats"`
+	Bans        []UlxBan         `json:"bans" db:"bans"`
 }
 
 type DarkRPPlayer struct {
@@ -89,6 +90,14 @@ type Joinstatistic struct {
 	Connected bool    `json:"connected" db:"connected"`
 }
 
+type UlxBan struct {
+	Admin   string  `json:"admin" db:"admin"`
+	Target  string  `json:"target" db:"target"`
+	Reason  string  `json:"reason" db:"reason"`
+	Bantime float64 `json:"bantime" db:"bantime"`
+	Curtime float64 `json:"curtime" db:"curtime"`
+}
+
 type LuctusLuaError struct {
 	Serverip    string `json:"serverip" form:"serverip" db:"serverip"`
 	Hash        string `json:"hash" form:"hash" db:"hash"`
@@ -106,9 +115,9 @@ type LuctusLuaError struct {
 ///// Discord Webhook Message
 
 type DiscordMessage struct {
-    Url string `json:"url" form:"url"`
-    Tag string `json:"tag" form:"tag"`
-    Msg string `json:"msg" form:"msg"`
+	Url string `json:"url" form:"url"`
+	Tag string `json:"tag" form:"tag"`
+	Msg string `json:"msg" form:"msg"`
 }
 
 ///// Logs

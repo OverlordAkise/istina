@@ -8,11 +8,11 @@ import (
 	//Config file
 	"io/ioutil"
 	"sigs.k8s.io/yaml"
-    //Discord Webhooks
-    "bytes"
-    "encoding/json"
-    "net/http"
-    "regexp"
+	//Discord Webhooks
+	"bytes"
+	"encoding/json"
+	"net/http"
+	"regexp"
 )
 
 type Config struct {
@@ -52,7 +52,7 @@ func SetupRouter() *gin.Engine {
 		var data TTTStat
 		err := c.BindJSON(&data)
 		if err != nil {
-            c.String(400, "INVALID DATA")
+			c.String(400, "INVALID DATA")
 			return
 		}
 		data.Serverip = c.ClientIP()
@@ -63,7 +63,7 @@ func SetupRouter() *gin.Engine {
 		var ls LuctusLinuxStat
 		err := c.BindJSON(&ls)
 		if err != nil {
-            c.String(400, "INVALID DATA")
+			c.String(400, "INVALID DATA")
 			return
 		}
 		ls.Realserverip = c.ClientIP()
@@ -74,7 +74,7 @@ func SetupRouter() *gin.Engine {
 		var ls LuctusLuaError
 		err := c.BindJSON(&ls)
 		if err != nil {
-            c.String(400, "INVALID DATA")
+			c.String(400, "INVALID DATA")
 			return
 		}
 		ls.Serverip = c.ClientIP()
@@ -96,27 +96,27 @@ func SetupRouter() *gin.Engine {
 		var ll LuctusLogs
 		err := c.BindJSON(&ll)
 		if err != nil {
-            c.String(400, "INVALID DATA")
+			c.String(400, "INVALID DATA")
 			return
 		}
 		ll.Serverip = c.ClientIP()
 		InsertLuctusLogs(ll)
 		c.String(200, "OK")
 	})
-    r.POST("/discordmsg", func(c *gin.Context) {
-        var dc DiscordMessage
-        err := c.BindJSON(&dc)
-        if err != nil {
-            panic(err)
-        }
-        debugPrint("/discordmsg", c.ClientIP(), dc.Tag, dc.Msg, dc.Url)
-        if !discordURLRegex.MatchString(dc.Url) {
-            c.String(400, "INVALID URL")
-            return
-        }
-        NotifyDiscordWebhook(dc)
-        c.String(200, "OK")
-    })
+	r.POST("/discordmsg", func(c *gin.Context) {
+		var dc DiscordMessage
+		err := c.BindJSON(&dc)
+		if err != nil {
+			panic(err)
+		}
+		debugPrint("/discordmsg", c.ClientIP(), dc.Tag, dc.Msg, dc.Url)
+		if !discordURLRegex.MatchString(dc.Url) {
+			c.String(400, "INVALID URL")
+			return
+		}
+		NotifyDiscordWebhook(dc)
+		c.String(200, "OK")
+	})
 	return r
 }
 
@@ -255,6 +255,17 @@ func InitDatabase(conString string) {
     switchedto BIGINT,
     timespent BIGINT,
     unique(serverid,jobname)
+    )`)
+
+	db.MustExec(`CREATE TABLE IF NOT EXISTS bans(
+    id SERIAL,
+    ts TIMESTAMP,
+    serverid VARCHAR(50),
+    admin VARCHAR(255),
+    target VARCHAR(50),
+    reason TEXT,
+    bantime BIGINT,
+    curtime BIGINT
     )`)
 
 	///Logs
@@ -420,6 +431,12 @@ func InsertDarkRPStat(ls DarkRPStat) {
 		tx.MustExec("INSERT INTO joinstats(serverid,steamid,jointime,connected) VALUES(?,?,?,?)", ls.Serverid, v.Steamid, v.Jointime, v.Connected)
 	}
 
+	debugPrint("["+ls.Serverid+"]", "--- Bans:")
+	for _, v := range ls.Bans {
+		debugPrint("["+ls.Serverid+"]", "Inserting:", v)
+		tx.MustExec("INSERT IGNORE INTO bans(serverid,admin,target,reason,bantime,curtime) VALUES(?,?,?,?,?,?)", ls.Serverid, v.Admin, v.Target, v.Reason, v.Bantime, v.Curtime)
+	}
+
 	err = tx.Commit()
 	if err != nil {
 		panic(err)
@@ -475,20 +492,20 @@ func InsertTTTStat(data TTTStat) {
 }
 
 func NotifyDiscordWebhook(dc DiscordMessage) {
-    data := map[string]interface{}{
-        "content": "[" + dc.Tag + "] " + dc.Msg,
-    }
-    jsonData, err := json.Marshal(data)
-    if err != nil {
-        panic(err)
-    }
-    req, err := http.NewRequest("POST", dc.Url, bytes.NewReader(jsonData))
-    if err != nil {
-        panic(err)
-    }
-    req.Header.Add("Content-Type", "application/json")
-    _, err = httpclient.Do(req)
-    if err != nil {
-        panic(err)
-    }
+	data := map[string]interface{}{
+		"content": "[" + dc.Tag + "] " + dc.Msg,
+	}
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		panic(err)
+	}
+	req, err := http.NewRequest("POST", dc.Url, bytes.NewReader(jsonData))
+	if err != nil {
+		panic(err)
+	}
+	req.Header.Add("Content-Type", "application/json")
+	_, err = httpclient.Do(req)
+	if err != nil {
+		panic(err)
+	}
 }

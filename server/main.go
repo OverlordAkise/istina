@@ -500,7 +500,7 @@ func InsertTTTStat(data TTTStat) {
 
 func NotifyDiscordWebhook(dc DiscordMessage) {
 	data := map[string]interface{}{
-		"content": "[" + dc.Tag + "] " + dc.Msg,
+		"content": dc.Tag + dc.Msg,
 	}
 	jsonData, err := json.Marshal(data)
 	if err != nil {

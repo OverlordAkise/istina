@@ -110,6 +110,16 @@ function GetCurrentTickrate()
     end)
 end
 
+function LuctusMonitorGetActiveWarns(ply)
+    if LuctusWarnGetCount then
+        return LuctusWarnGetCount(ply:SteamID())
+    end
+    if AWarn and AWarn.GetPlayerActiveWarnings then
+        return AWarn:GetPlayerActiveWarnings(ply)
+    end
+    return -1
+end
+
 function LuctusMonitorDo(shutdowning)
     local data = {["players"] = {}}
     local server_avgfps = 0
@@ -129,6 +139,7 @@ function LuctusMonitorDo(shutdowning)
         if shutdowning then
             v.online = false
         end
+        
         table.insert(data["players"],v)
     end
     data["gamemode"] = engine.ActiveGamemode()
@@ -246,7 +257,8 @@ hook.Add("PlayerInitialSpawn","luctus_monitor_ply_init",function(ply)
         ["concommands"] = -1,
         ["funccount"] = -1,
         ["addoncount"] = -1,
-        ["addonsize"] = -1
+        ["addonsize"] = -1,
+        ["warns"] = -1
     }
     ply.lmonplaytime = CurTime()
     ply.lmonplaytimel = CurTime()
@@ -291,7 +303,8 @@ net.Receive("luctus_monitor_collect",function(len,ply)
         ["concommands"] = net.ReadInt(11),
         ["funccount"] = net.ReadInt(16),
         ["addoncount"] = net.ReadInt(16),
-        ["addonsize"] = net.ReadInt(32)
+        ["addonsize"] = net.ReadInt(32),
+        ["warns"] = LuctusMonitorGetActiveWarns(ply)
     }
     ply.lmonplaytimel = CurTime()
 end)

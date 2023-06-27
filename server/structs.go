@@ -73,6 +73,7 @@ type DarkRPPlayer struct {
 	Addoncount             float64 `json:"addoncount" db:"addoncount"`
 	Addonsize              float64 `json:"addonsize" db:"addonsize"`
 	Warns                  float64 `json:"warns" db:"warns"`
+	Money                  float64 `json:"money" db:"money"`
 }
 
 type DarkRPKills struct {

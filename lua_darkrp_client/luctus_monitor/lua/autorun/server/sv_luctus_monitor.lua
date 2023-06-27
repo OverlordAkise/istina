@@ -258,7 +258,8 @@ hook.Add("PlayerInitialSpawn","luctus_monitor_ply_init",function(ply)
         ["funccount"] = -1,
         ["addoncount"] = -1,
         ["addonsize"] = -1,
-        ["warns"] = -1
+        ["warns"] = -1,
+        ["money"] = -1,
     }
     ply.lmonplaytime = CurTime()
     ply.lmonplaytimel = CurTime()
@@ -304,7 +305,8 @@ net.Receive("luctus_monitor_collect",function(len,ply)
         ["funccount"] = net.ReadInt(16),
         ["addoncount"] = net.ReadInt(16),
         ["addonsize"] = net.ReadInt(32),
-        ["warns"] = LuctusMonitorGetActiveWarns(ply)
+        ["warns"] = LuctusMonitorGetActiveWarns(ply),
+        ["money"] = ply:getDarkRPVar("money") or -1,
     }
     ply.lmonplaytimel = CurTime()
 end)

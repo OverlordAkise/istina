@@ -243,7 +243,8 @@ func InitDatabase(conString string) {
     funccount INT,
     addoncount INT,
     addonsize INT,
-    warns INT
+    warns INT,
+    money BIGINT
     )`)
 
 	db.MustExec(`CREATE TABLE IF NOT EXISTS weaponkills(
@@ -415,7 +416,7 @@ func InsertDarkRPStat(ls DarkRPStat) {
 	}
 	debugPrint("["+ls.Serverid+"]", "--- DarkRP players", len(ls.Players))
 	if len(ls.Players) > 0 {
-		_, err = tx.NamedExec("INSERT INTO luaplayer (serverid,steamid,nick,job,fpsavg,fpslow,fpshigh,pingavg,pingcur,luaramb,luarama,packetslost,os,country,screensize,screenmode,jitver,ip,playtime,playtimel,online,hookthink,hooktick,hookhudpaint,hookhudpaintbackground,hookpredrawhud,hookcreatemove,concommands,funccount,addoncount,addonsize, warns) VALUES (:serverid, :steamid, :nick, :job, :fpsavg, :fpslow, :fpshigh, :pingavg, :pingcur, :luaramb, :luarama, :packetslost, :os, :country, :screensize, :screenmode, :jitver, :ip, :playtime, :playtimel, :online, :hookthink, :hooktick, :hookhudpaint, :hookhudpaintbackground, :hookpredrawhud, :hookcreatemove, :concommands, :funccount, :addoncount, :addonsize, :warns)", ls.Players)
+		_, err = tx.NamedExec("INSERT INTO luaplayer (serverid,steamid,nick,job,fpsavg,fpslow,fpshigh,pingavg,pingcur,luaramb,luarama,packetslost,os,country,screensize,screenmode,jitver,ip,playtime,playtimel,online,hookthink,hooktick,hookhudpaint,hookhudpaintbackground,hookpredrawhud,hookcreatemove,concommands,funccount,addoncount,addonsize, warns, money) VALUES (:serverid, :steamid, :nick, :job, :fpsavg, :fpslow, :fpshigh, :pingavg, :pingcur, :luaramb, :luarama, :packetslost, :os, :country, :screensize, :screenmode, :jitver, :ip, :playtime, :playtimel, :online, :hookthink, :hooktick, :hookhudpaint, :hookhudpaintbackground, :hookpredrawhud, :hookcreatemove, :concommands, :funccount, :addoncount, :addonsize, :warns, :money)", ls.Players)
 		if err != nil {
 			panic(err)
 		}

@@ -27,11 +27,9 @@ var LUCTUSDEBUG bool = false
 var httpclient = http.Client{}
 var discordURLRegex = regexp.MustCompile("^https:\\/\\/discord.com\\/api\\/webhooks\\/\\d+\\/[-_a-zA-Z0-9]+$")
 
-func debugPrint(a ...any) (n int, err error) {
+func debugPrint(a ...any) {
 	if LUCTUSDEBUG == true {
-		return fmt.Println(a...)
-	} else {
-		return 0, nil
+		fmt.Println(a...)
 	}
 }
 

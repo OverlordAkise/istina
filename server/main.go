@@ -36,8 +36,10 @@ func debugPrint(a ...any) (n int, err error) {
 }
 
 func SetupRouter() *gin.Engine {
-	r := gin.Default()
-    RegisterMetrics(r)
+	r := gin.New()
+	r.Use(gin.Recovery())
+	r.Use(gin.LoggerWithConfig(gin.LoggerConfig{SkipPaths: []string{"/metrics"}}))
+	RegisterMetrics(r)
 	r.GET("/", func(c *gin.Context) {
 		c.String(200, "OK")
 	})

@@ -4,14 +4,14 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"net/http"
 	"strconv"
 	"time"
-    "net/http"
 )
 
 func RegisterMetrics(r *gin.Engine) {
-    
-    //Counter for only uphill data, Vec for variable labels
+
+	//Counter for only uphill data, Vec for variable labels
 	requestCounter := prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "istina",
@@ -21,20 +21,20 @@ func RegisterMetrics(r *gin.Engine) {
 		[]string{"code", "method", "host", "url"},
 	)
 	prometheus.MustRegister(requestCounter)
-    
-    // Histogram for buckets, Vec for variable labels
+
+	// Histogram for buckets, Vec for variable labels
 	durationCounter := prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Namespace: "istina",
 			Name:      "http_duration_seconds",
 			Help:      "HTTP request latencies in seconds",
-            Buckets: []float64{0.0001,0.001,0.01,0.1,0.3,0.5,1,2},
+			Buckets:   []float64{0.0001, 0.001, 0.01, 0.1, 0.3, 0.5, 1, 2},
 		},
 		[]string{"code", "method", "url"},
 	)
 	prometheus.MustRegister(durationCounter)
-    
-    //Summary for variable data that maybe doesnt fit into buckets
+
+	//Summary for variable data that maybe doesnt fit into buckets
 	sizeCounter := prometheus.NewSummary(
 		prometheus.SummaryOpts{
 			Namespace: "istina",
@@ -48,7 +48,7 @@ func RegisterMetrics(r *gin.Engine) {
 	r.Use(func(c *gin.Context) {
 		t := time.Now()
 		//bodylength, _ := io.Copy(ioutil.Discard, c.Request.Body)
-        bodylength := computeApproximateRequestSize(c.Request)
+		bodylength := computeApproximateRequestSize(c.Request)
 
 		c.Next()
 

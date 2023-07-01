@@ -13,12 +13,17 @@ import (
 	"encoding/json"
 	"net/http"
 	"regexp"
+	//Logging
+	ginzap "github.com/gin-contrib/zap"
+	"go.uber.org/zap"
+	"time"
 )
 
 type Config struct {
-	Mysql string `json:"mysql"`
-	Port  string `json:"port"`
-	Debug bool   `json:"debug"`
+	Mysql   string `json:"mysql"`
+	Port    string `json:"port"`
+	Debug   bool   `json:"debug"`
+	Logfile string `json:"logfile"`
 }
 
 var db *sqlx.DB
@@ -33,27 +38,36 @@ func debugPrint(a ...any) {
 	}
 }
 
-func SetupRouter() *gin.Engine {
+func SetupRouter(logger *zap.Logger) *gin.Engine {
 	r := gin.New()
-	r.Use(gin.Recovery())
-	r.Use(gin.LoggerWithConfig(gin.LoggerConfig{SkipPaths: []string{"/metrics"}}))
+	r.Use(ginzap.RecoveryWithZap(logger, true))
+	r.Use(ginzap.GinzapWithConfig(logger, &ginzap.Config{
+		TimeFormat: time.RFC3339,
+		UTC:        true,
+		SkipPaths:  []string{"/metrics"},
+	}))
 	RegisterMetrics(r)
 	r.GET("/", func(c *gin.Context) {
 		c.String(200, "OK")
 	})
 	r.GET("/debugon", func(c *gin.Context) {
 		LUCTUSDEBUG = true
+		logger.Warn("Enabled debug output")
 		c.String(200, "OK")
 	})
 	r.GET("/debugoff", func(c *gin.Context) {
 		LUCTUSDEBUG = false
+		logger.Warn("Disabled debug output")
 		c.String(200, "OK")
 	})
 	r.POST("/tttstat", func(c *gin.Context) {
 		var data TTTStat
 		err := c.BindJSON(&data)
 		if err != nil {
-			fmt.Println(err)
+			logger.Error("Couldn't bind JSON",
+				zap.String("url", c.Request.URL.Path),
+				zap.String("ip", c.ClientIP()),
+			)
 			c.String(400, "INVALID DATA")
 			return
 		}
@@ -65,7 +79,10 @@ func SetupRouter() *gin.Engine {
 		var ls LuctusLinuxStat
 		err := c.BindJSON(&ls)
 		if err != nil {
-			fmt.Println(err)
+			logger.Error("Couldn't bind JSON",
+				zap.String("url", c.Request.URL.Path),
+				zap.String("ip", c.ClientIP()),
+			)
 			c.String(400, "INVALID DATA")
 			return
 		}
@@ -77,7 +94,10 @@ func SetupRouter() *gin.Engine {
 		var ls LuctusLuaError
 		err := c.BindJSON(&ls)
 		if err != nil {
-			fmt.Println(err)
+			logger.Error("Couldn't bind JSON",
+				zap.String("url", c.Request.URL.Path),
+				zap.String("ip", c.ClientIP()),
+			)
 			c.String(400, "INVALID DATA")
 			return
 		}
@@ -89,7 +109,10 @@ func SetupRouter() *gin.Engine {
 		var ls DarkRPStat
 		err := c.BindJSON(&ls)
 		if err != nil {
-			fmt.Println(err)
+			logger.Error("Couldn't bind JSON",
+				zap.String("url", c.Request.URL.Path),
+				zap.String("ip", c.ClientIP()),
+			)
 			c.String(400, "INVALID DATA")
 			return
 		}
@@ -101,7 +124,10 @@ func SetupRouter() *gin.Engine {
 		var ll LuctusLogs
 		err := c.BindJSON(&ll)
 		if err != nil {
-			fmt.Println(err)
+			logger.Error("Couldn't bind JSON",
+				zap.String("url", c.Request.URL.Path),
+				zap.String("ip", c.ClientIP()),
+			)
 			c.String(400, "INVALID DATA")
 			return
 		}
@@ -113,15 +139,28 @@ func SetupRouter() *gin.Engine {
 		var dc DiscordMessage
 		err := c.BindJSON(&dc)
 		if err != nil {
-			fmt.Println(err)
+			logger.Error("Couldn't bind JSON",
+				zap.String("url", c.Request.URL.Path),
+				zap.String("ip", c.ClientIP()),
+			)
 			c.String(400, "INVALID DATA")
 		}
-		debugPrint("/discordmsg", c.ClientIP(), dc.Tag, dc.Msg, dc.Url)
 		if !discordURLRegex.MatchString(dc.Url) {
-			fmt.Println("REGEX MISMATCH")
+			logger.Error("Discord Regex Mismatch",
+				zap.String("url", c.Request.URL.Path),
+				zap.String("ip", c.ClientIP()),
+				zap.String("wurl", dc.Url),
+			)
 			c.String(400, "INVALID URL")
 			return
 		}
+		logger.Info("Sending discord webhook",
+			zap.String("url", c.Request.URL.Path),
+			zap.String("ip", c.ClientIP()),
+			zap.String("msg", dc.Msg),
+			zap.String("tag", dc.Tag),
+			zap.String("wurl", dc.Url),
+		)
 		NotifyDiscordWebhook(dc)
 		c.String(200, "OK")
 	})
@@ -139,11 +178,25 @@ func main() {
 		panic(err)
 	}
 	LUCTUSDEBUG = config.Debug
+
+	//logger
+	cfg := zap.NewProductionConfig()
+	cfg.DisableStacktrace = true
+	cfg.OutputPaths = []string{
+		config.Logfile,
+	}
+	logger, err := cfg.Build()
+	if err != nil {
+		panic(err)
+	}
+	defer logger.Sync()
+
 	fmt.Println("Debug mode:", LUCTUSDEBUG)
 	gin.SetMode(gin.ReleaseMode)
 	InitDatabase(config.Mysql)
-	r := SetupRouter()
-	fmt.Println("Now listening on *:" + config.Port)
+	r := SetupRouter(logger)
+	r.SetTrustedProxies([]string{"127.0.0.1"})
+	logger.Info("Now listening on *:" + config.Port)
 	r.Run("0.0.0.0:" + config.Port)
 }
 

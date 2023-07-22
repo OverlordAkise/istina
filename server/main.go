@@ -508,6 +508,10 @@ func InsertTTTStat(data TTTStat) {
 			panic(err)
 		}
 	}
+    
+    for _, v := range data.Joinstats {
+		tx.MustExec("INSERT INTO joinstats(serverid,steamid,jointime,connected) VALUES(?,?,?,?)", data.Serverid, v.Steamid, v.Jointime, v.Connected)
+	}
 
 	if len(data.Kills) > 0 {
 		_, err = tx.NamedExec("INSERT INTO tttkills (serverid,roundstate,roundid,wepclass,victim,attacker,victimrole,attackerrole) VALUES (:serverid,:roundstate,:roundid,:wepclass,:victim,:attacker,:victimrole,:attackerrole)", data.Kills)

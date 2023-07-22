@@ -44,10 +44,12 @@ concommand.Add("m_monitor", function(ply,cmd,args)
 end)
 
 util.AddNetworkString("luctus_monitor_collect")
-
+util.AddNetworkString("luctus_monitor_connecttime")
 
 LUCTUS_MONITOR_PLAYERS = {}
 LUCTUS_MONITOR_ROUNDID = os.date("%Y%m%d%H%M%S",os.time())
+local luctusJoinCache = {}
+local luctusJoins = {}
 
 function LuctusMonitorStart(delay,result,roundstate)
     LuctusMonitorGetRoles()
@@ -188,6 +190,9 @@ function LuctusMonitorSend(roundResult,roundstate)
     collectgarbage("collect")
     data["luarama"] = collectgarbage("count")
     
+    data["joinstats"] = luctusJoins
+    
+    --sending
     local ret = HTTP({
         failed = function(failMessage)
             print("[luctus_monitor] FAILED TO POST STATS!")
@@ -211,6 +216,7 @@ function LuctusMonitorSend(roundResult,roundstate)
     LuctusDebugPrint(util.TableToJSON(data))
     LUCTUS_MONITOR_PLAYERS = {}
     LUCTUS_MONITOR_KILLS = {}
+    luctusJoins = {}
     LuctusResetRoleCounter()
 end
 
@@ -324,6 +330,35 @@ hook.Add("PlayerDeath","luctus_monitor_kills",function(victim,inflictor,attacker
         end
     end
     table.insert(LUCTUS_MONITOR_KILLS,wepstat)
+end)
+
+--Joinstats
+
+gameevent.Listen("player_connect")
+hook.Add("player_connect", "luctus_monitor_connecttime", function(data)
+	luctusJoinCache[data.networkid] = CurTime()
+end)
+net.Receive("luctus_monitor_connecttime",function(len,ply)
+    local sid = ply:SteamID()
+    if luctusJoinCache[sid] then
+        table.insert(luctusJoins,{
+            ["steamid"] = sid,
+            ["jointime"] = CurTime() - luctusJoinCache[sid],
+            ["connected"] = true
+        })
+        luctusJoinCache[sid] = nil
+    end
+end)
+hook.Add("PlayerDisconnected","luctus_monitor_connecttime",function(ply)
+    local sid = ply:SteamID()
+    if luctusJoinCache[sid] then
+        table.insert(luctusJoins,{
+            ["steamid"] = sid,
+            ["jointime"] = CurTime() - luctusJoinCache[sid],
+            ["connected"] = false
+        })
+        luctusJoinCache[sid] = nil
+    end
 end)
 
 print("[luctus_monitor] sv loaded!")

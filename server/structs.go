@@ -165,6 +165,7 @@ type TTTStat struct {
 	Adetective  float64     `json:"adetective" db:"adetective"`
 	Players     []TTTPlayer `json:"players" db:"players"`
 	Kills       []TTTKills  `json:"kills" db:"kills"`
+    Joinstats   []Joinstatistic  `json:"joinstats" db:"joinstats"`
 }
 
 type TTTPlayer struct {

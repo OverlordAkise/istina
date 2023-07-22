@@ -207,6 +207,7 @@ type TTTPlayer struct {
 	Hosttimescale          float64 `json:"hosttimescale" db:"hosttimescale"`
 	Svallowcslua           float64 `json:"svallowcslua" db:"svallowcslua"`
 	Vcollidewireframe      float64 `json:"vcollidewireframe" db:"vcollidewireframe"`
+	Alive                  bool    `json:"alive" db:"alive"`
 }
 
 type TTTKills struct {

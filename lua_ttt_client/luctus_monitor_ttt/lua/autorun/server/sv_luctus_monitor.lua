@@ -108,6 +108,7 @@ end
 --Get roles immediately
 LUCTUS_MONITOR_ROLES = {}
 LUCTUS_MONITOR_ROLES_ALIVE = {}
+LUCTUS_MONITOR_PLY_ALIVE = {}
 
 function LuctusResetRoleCounter()
     LUCTUS_MONITOR_ROLES = {
@@ -121,6 +122,7 @@ function LuctusResetRoleCounter()
         ["detective"] = 0,
         ["innocent"] = 0,
     }
+    LUCTUS_MONITOR_PLY_ALIVE = {}
 end
 
 LuctusResetRoleCounter()
@@ -129,17 +131,17 @@ function LuctusMonitorGetRoles()
     for k,v in pairs(player.GetAll()) do
         if v:IsSpec() then 
             LUCTUS_MONITOR_ROLES["spectator"] = LUCTUS_MONITOR_ROLES["spectator"] + 1
-            continue
         end
         if v:Alive() then
             LUCTUS_MONITOR_ROLES_ALIVE[v:GetRoleString()] = LUCTUS_MONITOR_ROLES_ALIVE[v:GetRoleString()] + 1
         end
         LUCTUS_MONITOR_ROLES[v:GetRoleString()] = LUCTUS_MONITOR_ROLES[v:GetRoleString()] + 1
+        LUCTUS_MONITOR_PLY_ALIVE[v:SteamID()] = v:Alive()
     end
 end
 
 function LuctusMonitorSend(roundResult,roundstate)
-    if GetRoundState() == 2 then
+    if roundstate == 2 then
         LUCTUS_MONITOR_ROUNDID = os.date("%Y%m%d%H%M%S",os.time())
     end
     local data = {["players"] = {}}
@@ -156,6 +158,9 @@ function LuctusMonitorSend(roundResult,roundstate)
         v["serverid"] = LUCTUS_MONITOR_SERVER_ID
         v["roundstate"] = roundstate
         v["roundid"] = LUCTUS_MONITOR_ROUNDID
+        if roundstate == 4 then
+            v["alive"] = LUCTUS_MONITOR_PLY_ALIVE[k]
+        end
         table.insert(data["players"],v)
     end
     data["gamemode"] = engine.ActiveGamemode()
@@ -261,6 +266,7 @@ hook.Add("PlayerInitialSpawn","luctus_monitor_ply_init",function(ply)
         ["host_timescale"] = "-1",
         ["sv_allowcslua"] = "-1",
         ["vcollide_wireframe"] = "-1",
+        ["alive"] = ply:Alive(),
     }
     ply.lmonplaytime = CurTime()
 end)
@@ -310,6 +316,7 @@ end)
 --Kill counting
 LUCTUS_MONITOR_KILLS = {}
 hook.Add("PlayerDeath","luctus_monitor_kills",function(victim,inflictor,attacker)
+    --print("[DEBUG PLAYERDEATH]",victim,inflictor,attacker)
     LuctusDebugPrint("Death occured, saving...")
     local wepstat = {
         ["serverid"] = LUCTUS_MONITOR_SERVER_ID,

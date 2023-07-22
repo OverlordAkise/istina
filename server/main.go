@@ -418,7 +418,8 @@ func InitDatabase(conString string) {
     victim VARCHAR(50),
     attacker VARCHAR(50),
     victimrole VARCHAR(20),
-    attackerrole VARCHAR(20)
+    attackerrole VARCHAR(20),
+    hitgroup INT
     )`)
 
 	///Joinstats
@@ -508,13 +509,13 @@ func InsertTTTStat(data TTTStat) {
 			panic(err)
 		}
 	}
-    
-    for _, v := range data.Joinstats {
+
+	for _, v := range data.Joinstats {
 		tx.MustExec("INSERT INTO joinstats(serverid,steamid,jointime,connected) VALUES(?,?,?,?)", data.Serverid, v.Steamid, v.Jointime, v.Connected)
 	}
 
 	if len(data.Kills) > 0 {
-		_, err = tx.NamedExec("INSERT INTO tttkills (serverid,roundstate,roundid,wepclass,victim,attacker,victimrole,attackerrole) VALUES (:serverid,:roundstate,:roundid,:wepclass,:victim,:attacker,:victimrole,:attackerrole)", data.Kills)
+		_, err = tx.NamedExec("INSERT INTO tttkills (serverid,roundstate,roundid,wepclass,victim,attacker,victimrole,attackerrole,hitgroup) VALUES (:serverid,:roundstate,:roundid,:wepclass,:victim,:attacker,:victimrole,:attackerrole,:hitgroup)", data.Kills)
 		if err != nil {
 			panic(err)
 		}

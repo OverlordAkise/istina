@@ -320,6 +320,7 @@ hook.Add("PlayerDeath","luctus_monitor_kills",function(victim,inflictor,attacker
         ["wepclass"] = "",
         ["attacker"] = "",
         ["attackerrole"] = "",
+        ["hitgroup"] = -1,
     }
     if IsValid(attacker) and attacker:IsPlayer() and not victim:IsSpec() then
         LuctusDebugPrint("Logging killer of death")
@@ -328,6 +329,11 @@ hook.Add("PlayerDeath","luctus_monitor_kills",function(victim,inflictor,attacker
         if attacker:GetActiveWeapon() and IsValid(attacker:GetActiveWeapon()) then
             wepstat["wepclass"] = attacker:GetActiveWeapon():GetClass()
         end
+        if not attacker:IsBot() then
+            wepstat["hitgroup"] = victim:LastHitGroup()
+        end
+    else
+        wepstat["wepclass"] = attacker:GetClass()
     end
     table.insert(LUCTUS_MONITOR_KILLS,wepstat)
 end)

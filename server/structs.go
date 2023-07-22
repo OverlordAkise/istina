@@ -139,33 +139,33 @@ type LuctusLogs struct {
 ///// TTT
 
 type TTTStat struct {
-	Id          float64     `json:"id" db:"id"`
-	Ts          string      `json:"ts" db:"ts"`
-	Serverid    string      `json:"serverid" db:"serverid" binding:"required"`
-	Serverip    string      `json:"serverip" db:"serverip"`
-	Map         string      `json:"map" db:"map"`
-	Gamemode    string      `json:"gamemode" db:"gamemode"`
-	Roundstate  float64     `json:"roundstate" db:"roundstate"`
-	Roundid     string      `json:"roundid" db:"roundid"`
-	Roundresult float64     `json:"roundresult" db:"roundresult"`
-	Tickrateset float64     `json:"tickrateset" db:"tickrateset"`
-	Tickratecur float64     `json:"tickratecur" db:"tickratecur"`
-	Entscount   float64     `json:"entscount" db:"entscount"`
-	Plycount    float64     `json:"plycount" db:"plycount"`
-	Avgfps      float64     `json:"avgfps" db:"avgfps"`
-	Avgping     float64     `json:"avgping" db:"avgping"`
-	Luaramb     float64     `json:"luaramb" db:"luaramb"`
-	Luarama     float64     `json:"luarama" db:"luarama"`
-	Innocent    float64     `json:"innocent" db:"innocent"`
-	Traitor     float64     `json:"traitor" db:"traitor"`
-	Detective   float64     `json:"detective" db:"detective"`
-	Spectator   float64     `json:"spectator" db:"spectator"`
-	Ainnocent   float64     `json:"ainnocent" db:"ainnocent"`
-	Atraitor    float64     `json:"atraitor" db:"atraitor"`
-	Adetective  float64     `json:"adetective" db:"adetective"`
-	Players     []TTTPlayer `json:"players" db:"players"`
-	Kills       []TTTKills  `json:"kills" db:"kills"`
-    Joinstats   []Joinstatistic  `json:"joinstats" db:"joinstats"`
+	Id          float64         `json:"id" db:"id"`
+	Ts          string          `json:"ts" db:"ts"`
+	Serverid    string          `json:"serverid" db:"serverid" binding:"required"`
+	Serverip    string          `json:"serverip" db:"serverip"`
+	Map         string          `json:"map" db:"map"`
+	Gamemode    string          `json:"gamemode" db:"gamemode"`
+	Roundstate  float64         `json:"roundstate" db:"roundstate"`
+	Roundid     string          `json:"roundid" db:"roundid"`
+	Roundresult float64         `json:"roundresult" db:"roundresult"`
+	Tickrateset float64         `json:"tickrateset" db:"tickrateset"`
+	Tickratecur float64         `json:"tickratecur" db:"tickratecur"`
+	Entscount   float64         `json:"entscount" db:"entscount"`
+	Plycount    float64         `json:"plycount" db:"plycount"`
+	Avgfps      float64         `json:"avgfps" db:"avgfps"`
+	Avgping     float64         `json:"avgping" db:"avgping"`
+	Luaramb     float64         `json:"luaramb" db:"luaramb"`
+	Luarama     float64         `json:"luarama" db:"luarama"`
+	Innocent    float64         `json:"innocent" db:"innocent"`
+	Traitor     float64         `json:"traitor" db:"traitor"`
+	Detective   float64         `json:"detective" db:"detective"`
+	Spectator   float64         `json:"spectator" db:"spectator"`
+	Ainnocent   float64         `json:"ainnocent" db:"ainnocent"`
+	Atraitor    float64         `json:"atraitor" db:"atraitor"`
+	Adetective  float64         `json:"adetective" db:"adetective"`
+	Players     []TTTPlayer     `json:"players" db:"players"`
+	Kills       []TTTKills      `json:"kills" db:"kills"`
+	Joinstats   []Joinstatistic `json:"joinstats" db:"joinstats"`
 }
 
 type TTTPlayer struct {
@@ -218,4 +218,5 @@ type TTTKills struct {
 	Attacker     string  `json:"attacker" db:"attacker"`
 	Victimrole   string  `json:"victimrole" db:"victimrole"`
 	Attackerrole string  `json:"attackerrole" db:"attackerrole"`
+	Hitgroup     float64 `json:"hitgroup" db:"hitgroup"`
 }

@@ -2,7 +2,7 @@
 --Made by OverlordAkise
 
 --URL for the web logs
-lucidLogWebUrl = "https://luctus.at/istina/up/luctuslogs"
+lucidLogWebUrl = "http://localhost:7070/luctuslogs"
 --How many loglines until we send to webserver
 lucidLogWebSendAmount = 200
 --CONFIG END
@@ -12,6 +12,9 @@ LUCTUS_MONITOR_SERVER_ID = LUCTUS_MONITOR_SERVER_ID or ""
 if LUCTUS_MONITOR_SERVER_ID == "" and file.Exists("data/luctus_monitor.txt","GAME") then
     print("[luctus_logs] Found server ID, loading...")
     LUCTUS_MONITOR_SERVER_ID = file.Read("data/luctus_monitor.txt","GAME")
+else
+    error("[luctus_logs] no server id found, please install luctus_monitor")
+    return
 end
 lucid_weblogcache = {}
 local function log_push(cat,text)

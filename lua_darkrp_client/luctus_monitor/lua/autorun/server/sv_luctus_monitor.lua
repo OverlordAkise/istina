@@ -417,22 +417,30 @@ hook.Add("SAM.BannedPlayer", "luctus_monitor_bans", function(ply, unban_date, re
         steamid = ply:SteamID()
     end
     local nowtime = os.time()
+    local unbantime = unban_date
+    if unbantime > 0 then
+        unbantime = unbantime-nowtime
+    end
     table.insert(luctusBans,{
         ["admin"] = admin_steamid,
         ["target"] = steamid,
         ["reason"] = reason,
-        ["bantime"] = unban_date-nowtime,
-        ["curtime"] = os.time(),
+        ["bantime"] = unbantime,
+        ["curtime"] = nowtime,
     })
 end)
 hook.Add("SAM.BannedSteamID", "luctus_monitor_bans", function(steamid, unban_date, reason, admin_steamid)
     local nowtime = os.time()
+    local unbantime = unban_date
+    if unbantime > 0 then
+        unbantime = unbantime-nowtime
+    end
     table.insert(luctusBans,{
         ["admin"] = admin_steamid,
         ["target"] = steamid,
         ["reason"] = reason,
-        ["bantime"] = unban_date-nowtime,
-        ["curtime"] = os.time(),
+        ["bantime"] = unbantime,
+        ["curtime"] = nowtime,
     })
 end)
 

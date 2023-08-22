@@ -411,4 +411,29 @@ hook.Add("ULibPlayerBanned","luctus_monitor_bans",function(steamid,bandata)
     })
 end)
 
+hook.Add("SAM.BannedPlayer", "luctus_monitor_bans", function(ply, unban_date, reason, admin_steamid)
+    local steamid = "UNKNOWN"
+    if IsValid(ply) then
+        steamid = ply:SteamID()
+    end
+    local nowtime = os.time()
+    table.insert(luctusBans,{
+        ["admin"] = admin_steamid,
+        ["target"] = steamid,
+        ["reason"] = reason,
+        ["bantime"] = unban_date-nowtime,
+        ["curtime"] = os.time(),
+    })
+end)
+hook.Add("SAM.BannedSteamID", "luctus_monitor_bans", function(steamid, unban_date, reason, admin_steamid)
+    local nowtime = os.time()
+    table.insert(luctusBans,{
+        ["admin"] = admin_steamid,
+        ["target"] = steamid,
+        ["reason"] = reason,
+        ["bantime"] = unban_date-nowtime,
+        ["curtime"] = os.time(),
+    })
+end)
+
 print("[luctus_monitor] sv loaded!")

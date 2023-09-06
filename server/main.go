@@ -240,7 +240,7 @@ func InitDatabase(conString string) {
     version VARCHAR(8)
     )`)
 
-	db.MustExec(`CREATE TABLE IF NOT EXISTS luastate(
+	db.MustExec(`CREATE TABLE IF NOT EXISTS rpserver(
     id SERIAL,
     ts TIMESTAMP,
     serverid VARCHAR(50),
@@ -258,7 +258,7 @@ func InitDatabase(conString string) {
     luarama INT
     )`)
 
-	db.MustExec(`CREATE TABLE IF NOT EXISTS luaplayer(
+	db.MustExec(`CREATE TABLE IF NOT EXISTS rpplayer(
     id SERIAL,
     ts TIMESTAMP,
     serverid VARCHAR(50),
@@ -453,12 +453,12 @@ func InsertLuaError(ls LuctusLuaError) {
 
 func InsertDarkRPStat(ls DarkRPStat) {
 	tx := db.MustBegin()
-	_, err := tx.NamedExec("INSERT INTO luastate(serverid,serverip,map,gamemode,tickrateset,tickratecur,entscount,plycount,uptime,avgfps,avgping,luaramb,luarama) VALUES(:serverid,:serverip,:map,:gamemode,:tickrateset,:tickratecur,:entscount,:plycount,:uptime,:avgfps,:avgping,:luaramb,:luarama)", ls)
+	_, err := tx.NamedExec("INSERT INTO rpserver(serverid,serverip,map,gamemode,tickrateset,tickratecur,entscount,plycount,uptime,avgfps,avgping,luaramb,luarama) VALUES(:serverid,:serverip,:map,:gamemode,:tickrateset,:tickratecur,:entscount,:plycount,:uptime,:avgfps,:avgping,:luaramb,:luarama)", ls)
 	if err != nil {
 		panic(err)
 	}
 	if len(ls.Players) > 0 {
-		_, err = tx.NamedExec("INSERT INTO luaplayer (serverid,steamid,nick,job,fpsavg,fpslow,fpshigh,pingavg,pingcur,luaramb,luarama,packetslost,os,country,screensize,screenmode,jitver,ip,playtime,playtimel,online,hookthink,hooktick,hookhudpaint,hookhudpaintbackground,hookpredrawhud,hookcreatemove,concommands,funccount,addoncount,addonsize, warns, money) VALUES (:serverid, :steamid, :nick, :job, :fpsavg, :fpslow, :fpshigh, :pingavg, :pingcur, :luaramb, :luarama, :packetslost, :os, :country, :screensize, :screenmode, :jitver, :ip, :playtime, :playtimel, :online, :hookthink, :hooktick, :hookhudpaint, :hookhudpaintbackground, :hookpredrawhud, :hookcreatemove, :concommands, :funccount, :addoncount, :addonsize, :warns, :money)", ls.Players)
+		_, err = tx.NamedExec("INSERT INTO rpplayer (serverid,steamid,nick,job,fpsavg,fpslow,fpshigh,pingavg,pingcur,luaramb,luarama,packetslost,os,country,screensize,screenmode,jitver,ip,playtime,playtimel,online,hookthink,hooktick,hookhudpaint,hookhudpaintbackground,hookpredrawhud,hookcreatemove,concommands,funccount,addoncount,addonsize, warns, money) VALUES (:serverid, :steamid, :nick, :job, :fpsavg, :fpslow, :fpshigh, :pingavg, :pingcur, :luaramb, :luarama, :packetslost, :os, :country, :screensize, :screenmode, :jitver, :ip, :playtime, :playtimel, :online, :hookthink, :hooktick, :hookhudpaint, :hookhudpaintbackground, :hookpredrawhud, :hookcreatemove, :concommands, :funccount, :addoncount, :addonsize, :warns, :money)", ls.Players)
 		if err != nil {
 			panic(err)
 		}

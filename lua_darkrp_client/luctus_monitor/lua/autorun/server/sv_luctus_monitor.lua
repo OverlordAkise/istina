@@ -62,7 +62,7 @@ local luctusJoins = {}
 local luctusBans = {}
 
 function LuctusMonitorStart()
-    timer.Create("luctus_monitor_timer",300,0,function()
+    timer.Create("luctus_monitor_timer",180,0,function()
         --This takes time, so run it first, then send it
         GetCurrentTickrate()
         LuctusMonitorCollectPlayers()

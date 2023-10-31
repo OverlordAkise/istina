@@ -189,7 +189,7 @@ func main() {
 	gin.SetMode(gin.ReleaseMode)
 	InitDatabase(config.Mysql)
 	r := SetupRouter(logger)
-	r.SetTrustedProxies([]string{"127.0.0.1"})
+	r.SetTrustedProxies([]string{"127.0.0.1","::1"})
 	fmt.Println("Now listening on *:" + config.Port)
 	logger.Info("Starting server on *:" + config.Port)
 	r.Run("0.0.0.0:" + config.Port)

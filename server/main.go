@@ -40,6 +40,8 @@ func SetupRouter(logger *zap.Logger) *gin.Engine {
 		UTC:        true,
 		SkipPaths:  []string{"/metrics"},
 	}))
+	RegisterMetrics(r, db)
+
 	r.GET("/", func(c *gin.Context) {
 		c.String(200, "OK")
 	})
@@ -188,8 +190,7 @@ func main() {
 	gin.SetMode(gin.ReleaseMode)
 	InitDatabase(config.Mysql)
 	r := SetupRouter(logger)
-    RegisterMetrics(r,db)
-	r.SetTrustedProxies([]string{"127.0.0.1","::1"})
+	r.SetTrustedProxies([]string{"127.0.0.1", "::1"})
 	fmt.Println("Now listening on *:" + config.Port)
 	logger.Info("Starting server on *:" + config.Port)
 	r.Run("0.0.0.0:" + config.Port)

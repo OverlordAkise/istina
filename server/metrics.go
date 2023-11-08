@@ -2,17 +2,19 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/jmoiron/sqlx"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"net/http"
 	"strconv"
 	"time"
-    _ "github.com/go-sql-driver/mysql"
-	"github.com/jmoiron/sqlx"
-    "github.com/dlmiddlecote/sqlstats"
 )
 
 func RegisterMetrics(r *gin.Engine, db *sqlx.DB) {
+
+	collector := collectors.NewDBStatsCollector(db.DB, "istina") //*sql.DB.DB is *sql.DB
+	prometheus.MustRegister(collector)
 
 	//Counter for only uphill data, Vec for variable labels
 	requestCounter := prometheus.NewCounterVec(
@@ -64,9 +66,6 @@ func RegisterMetrics(r *gin.Engine, db *sqlx.DB) {
 			sizeCounter.Observe(float64(bodylength))
 		}
 	})
-    
-    collector := sqlstats.NewStatsCollector("istina", db)
-    prometheus.MustRegister(collector)
 
 	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
 }

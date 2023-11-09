@@ -136,6 +136,14 @@ type LuctusLogs struct {
 	Logs     []LuctusLog `json:"logs" form:"logs" db:"logs"`
 }
 
+///// Playeravatar
+
+type PlayerAvatar struct {
+	Steamid   string `json:"steamid" db:"steamid"`
+	Steamid64 string `json:"steamid64" db:"steamid64"`
+	Image     string `json:"image" db:"image"`
+}
+
 ///// TTT
 
 type TTTStat struct {

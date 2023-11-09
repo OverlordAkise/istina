@@ -130,6 +130,20 @@ func SetupRouter(logger *zap.Logger) *gin.Engine {
 		InsertLuctusLogs(ll)
 		c.String(200, "OK")
 	})
+	r.POST("/playeravatar", func(c *gin.Context) {
+		var pa PlayerAvatar
+		err := c.BindJSON(&pa)
+		if err != nil {
+			logger.Error("Couldn't bind JSON",
+				zap.String("url", c.Request.URL.Path),
+				zap.String("ip", c.ClientIP()),
+			)
+			c.String(400, "INVALID DATA")
+			return
+		}
+		InsertPlayerAvatar(pa)
+		c.String(200, "OK")
+	})
 	r.POST("/discordmsg", func(c *gin.Context) {
 		var dc DiscordMessage
 		err := c.BindJSON(&dc)
@@ -435,6 +449,17 @@ func InitDatabase(conString string) {
     connected BOOL
     )`)
 
+	///Playeravatar
+
+	db.MustExec(`CREATE TABLE IF NOT EXISTS playeravatar(
+    id SERIAL,
+    ts TIMESTAMP,
+    steamid VARCHAR(50),
+    steamid64 VARCHAR(50),
+    image TEXT,
+    unique(steamid,steamid64)
+    )`)
+
 	fmt.Println("DB initialized!")
 }
 
@@ -496,6 +521,10 @@ func InsertLuctusLogs(ll LuctusLogs) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func InsertPlayerAvatar(pa PlayerAvatar) {
+	db.MustExec("INSERT INTO playeravatar(steamid,steamid64,image) VALUES(?,?,?) ON DUPLICATE KEY UPDATE image=?;", pa.Steamid, pa.Steamid64, pa.Image, pa.Image)
 }
 
 func InsertTTTStat(data TTTStat) {

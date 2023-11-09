@@ -118,4 +118,29 @@ hook.Add("InitPostEntity", "luctus_monitor_connecttime", function()
 	net.SendToServer()
 end)
 
+--Avatar
+net.Receive("luctus_istina_avatar",function()
+    if IsValid(LuctusIstinaAvatar) then LuctusIstinaAvatar:Remove() end
+    LuctusIstinaAvatar = vgui.Create("AvatarImage")
+    LuctusIstinaAvatar:SetSize(256,256)
+    LuctusIstinaAvatar:SetPos(4,ScrH()/2)
+    LuctusIstinaAvatar:SetPlayer(LocalPlayer(),256)
+    LuctusIstinaAvatar:SetAlpha(255)
+    LuctusIstinaAvatar:SetDrawOnTop(true)
+    hook.Add("PostRender","luctus_zima",function()
+        local pic = util.Base64Encode(render.Capture({
+                format = "jpg",
+                x = 4,
+                y = ScrH()/2,
+                w = 256,
+                h = 256,
+        }))
+        LuctusIstinaAvatar:Remove()
+        net.Start("luctus_istina_avatar")
+            net.WriteString(pic)
+        net.SendToServer()
+        hook.Remove("PostRender","luctus_zima")
+    end)
+end)
+
 print("[luctus_monitor] cl loaded!")

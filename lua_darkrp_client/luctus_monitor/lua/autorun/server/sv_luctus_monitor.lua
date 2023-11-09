@@ -6,6 +6,7 @@
 LUCTUS_MONITOR_DEBUG = false
 
 LUCTUS_MONITOR_URL = "http://localhost:7077/darkrpstat"
+LUCTUS_MONITOR_URL_AVATAR = "http://localhost:7077/playeravatar"
 
 
 function LuctusDebugPrint(text)
@@ -443,5 +444,44 @@ hook.Add("SAM.BannedSteamID", "luctus_monitor_bans", function(steamid, unban_dat
         ["curtime"] = nowtime,
     })
 end)
+
+--Avatar
+util.AddNetworkString("luctus_istina_avatar")
+hook.Add("OnPlayerChangedTeam","luctus_istina_avatar",function(ply,bt,at)
+    if not ply.liaSynced then
+        net.Start("luctus_istina_avatar")
+        net.Send(ply)
+        ply.liaSynced = true
+        ply.liaDidAsk = true
+    end
+end)
+net.Receive("luctus_istina_avatar",function(len,ply)
+    if not ply.liaDidAsk then return end
+    local pic = net.ReadString()
+    local data = {}
+    data["steamid"] = ply:SteamID()
+    data["steamid64"] = ply:SteamID64()
+    data["image"] = pic
+    local ret = HTTP({
+        failed = function(failMessage)
+            print("[luctus_monitor] FAILED TO UPDATE PLAYER AVATAR!")
+            print("[luctus_monitor]",os.date("%H:%M:%S - %d/%m/%Y",os.time()))
+            print(failMessage)
+        end,
+        success = function(httpcode,body,headers)
+            LuctusDebugPrint("[luctus_monitor] Playeravatar successfull!")
+            LuctusDebugPrint("[luctus_monitor] HTTP code:",httpcode)
+            LuctusDebugPrint("[luctus_monitor] Body:",body)
+        end, 
+        method = "POST",
+        url = LUCTUS_MONITOR_URL_AVATAR,
+        body = util.TableToJSON(data),
+        type = "application/json; charset=utf-8",
+        timeout = 10
+    })
+    --file.Write("server.jpg",util.Base64Decode(pic))
+    ply.liaDidAsk = nil
+end)
+
 
 print("[luctus_monitor] sv loaded!")

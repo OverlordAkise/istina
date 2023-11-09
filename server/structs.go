@@ -45,6 +45,7 @@ type DarkRPPlayer struct {
 	Steamid                string  `json:"steamid"  db:"steamid"`
 	Nick                   string  `json:"nick"  db:"nick"`
 	Job                    string  `json:"job"  db:"job"`
+	Rank                   string  `json:"rank"  db:"rank"`
 	Fpsavg                 float64 `json:"fpsavg" db:"fpsavg"`
 	Fpslow                 float64 `json:"fpslow" db:"fpslow"`
 	Fpshigh                float64 `json:"fpshigh" db:"fpshigh"`

@@ -275,7 +275,7 @@ func InitDatabase(conString string) {
 
 	db.MustExec(`CREATE TABLE IF NOT EXISTS rpplayer(
     id SERIAL,
-    ts TIMESTAMP,
+    ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
     serverid VARCHAR(50),
     steamid VARCHAR(50),
     nick VARCHAR(50),

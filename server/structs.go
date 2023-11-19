@@ -32,7 +32,8 @@ type DarkRPStat struct {
 	Luaramb     float64          `json:"luaramb" db:"luaramb"`
 	Luarama     float64          `json:"luarama" db:"luarama"`
 	Players     []DarkRPPlayer   `json:"players" db:"players"`
-	Jobs        []DarkRPJobstats `json:"jobs" db:"jobs"`
+	Jobs        []DarkRPJobstat `json:"jobs" db:"jobs"`
+	Plyjobs     []DarkRPPlyjob   `json:"plyjobs" db:"plyjobs"`
 	Weaponkills []DarkRPKills    `json:"weaponkills" db:"weaponkills"`
 	Joinstats   []Joinstatistic  `json:"joinstats" db:"joinstats"`
 	Bans        []UlxBan         `json:"bans" db:"bans"`
@@ -82,9 +83,14 @@ type DarkRPKills struct {
 	Victim   string `json:"victim"`
 	Attacker string `json:"attacker"`
 }
-type DarkRPJobstats struct {
+type DarkRPJobstat struct {
 	Jobname  string  `json:"jobname" db:"jobname"`
 	Switches float64 `json:"switches" db:"switches"`
+	Playtime float64 `json:"playtime" db:"playtime"`
+}
+type DarkRPPlyjob struct {
+	Steamid  string  `json:"steamid" db:"steamid"`
+	Jobname  string  `json:"jobname" db:"jobname"`
 	Playtime float64 `json:"playtime" db:"playtime"`
 }
 type Joinstatistic struct {

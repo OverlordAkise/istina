@@ -16,27 +16,27 @@ type LuctusLinuxStat struct {
 }
 
 type DarkRPStat struct {
-	Id          float64          `json:"id" db:"id"`
-	Ts          string           `json:"ts" db:"ts"`
-	Serverid    string           `json:"serverid" db:"serverid" binding:"required"`
-	Serverip    string           `json:"serverip" db:"serverip"`
-	Map         string           `json:"map" db:"map"`
-	Gamemode    string           `json:"gamemode" db:"gamemode"`
-	Uptime      float64          `json:"uptime" db:"uptime"`
-	Tickrateset float64          `json:"tickrateset" db:"tickrateset"`
-	Tickratecur float64          `json:"tickratecur" db:"tickratecur"`
-	Entscount   float64          `json:"entscount" db:"entscount"`
-	Plycount    float64          `json:"plycount" db:"plycount"`
-	Avgfps      float64          `json:"avgfps" db:"avgfps"`
-	Avgping     float64          `json:"avgping" db:"avgping"`
-	Luaramb     float64          `json:"luaramb" db:"luaramb"`
-	Luarama     float64          `json:"luarama" db:"luarama"`
-	Players     []DarkRPPlayer   `json:"players" db:"players"`
+	Id          float64         `json:"id" db:"id"`
+	Ts          string          `json:"ts" db:"ts"`
+	Serverid    string          `json:"serverid" db:"serverid" binding:"required"`
+	Serverip    string          `json:"serverip" db:"serverip"`
+	Map         string          `json:"map" db:"map"`
+	Gamemode    string          `json:"gamemode" db:"gamemode"`
+	Uptime      float64         `json:"uptime" db:"uptime"`
+	Tickrateset float64         `json:"tickrateset" db:"tickrateset"`
+	Tickratecur float64         `json:"tickratecur" db:"tickratecur"`
+	Entscount   float64         `json:"entscount" db:"entscount"`
+	Plycount    float64         `json:"plycount" db:"plycount"`
+	Avgfps      float64         `json:"avgfps" db:"avgfps"`
+	Avgping     float64         `json:"avgping" db:"avgping"`
+	Luaramb     float64         `json:"luaramb" db:"luaramb"`
+	Luarama     float64         `json:"luarama" db:"luarama"`
+	Players     []DarkRPPlayer  `json:"players" db:"players"`
 	Jobs        []DarkRPJobstat `json:"jobs" db:"jobs"`
-	Plyjobs     []DarkRPPlyjob   `json:"plyjobs" db:"plyjobs"`
-	Weaponkills []DarkRPKills    `json:"weaponkills" db:"weaponkills"`
-	Joinstats   []Joinstatistic  `json:"joinstats" db:"joinstats"`
-	Bans        []UlxBan         `json:"bans" db:"bans"`
+	Plyjobs     []DarkRPPlyjob  `json:"plyjobs" db:"plyjobs"`
+	Weaponkills []DarkRPKills   `json:"weaponkills" db:"weaponkills"`
+	Joinstats   []Joinstatistic `json:"joinstats" db:"joinstats"`
+	Bans        []UlxBan        `json:"bans" db:"bans"`
 }
 
 type DarkRPPlayer struct {

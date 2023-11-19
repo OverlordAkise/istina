@@ -330,7 +330,7 @@ func InitDatabase(conString string) {
     timespent BIGINT,
     unique(serverid,jobname)
     )`)
-    
+
 	db.MustExec(`CREATE TABLE IF NOT EXISTS plyjobtimes(
     id SERIAL,
     ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
@@ -508,10 +508,10 @@ func InsertDarkRPStat(ls DarkRPStat) {
 	for _, v := range ls.Jobs {
 		tx.MustExec("INSERT INTO jobstats(serverid,jobname,switchedto,timespent) VALUES(?,?,?,?) ON DUPLICATE KEY UPDATE switchedto=switchedto+?, timespent=timespent+?;", ls.Serverid, v.Jobname, v.Switches, v.Playtime, v.Switches, v.Playtime)
 	}
-    
-    for _, v := range ls.Plyjobs {
-        tx.MustExec("INSERT INTO plyjobtimes(serverid,steamid,jobname,timespent) VALUES(?,?,?,?) ON DUPLICATE KEY UPDATE timespent=timespent+?;", ls.Serverid, v.Steamid, v.Jobname, v.Playtime, v.Playtime)
-    }
+
+	for _, v := range ls.Plyjobs {
+		tx.MustExec("INSERT INTO plyjobtimes(serverid,steamid,jobname,timespent) VALUES(?,?,?,?) ON DUPLICATE KEY UPDATE timespent=timespent+?;", ls.Serverid, v.Steamid, v.Jobname, v.Playtime, v.Playtime)
+	}
 
 	for _, v := range ls.Joinstats {
 		tx.MustExec("INSERT INTO joinstats(serverid,steamid,jointime,connected) VALUES(?,?,?,?)", ls.Serverid, v.Steamid, v.Jointime, v.Connected)

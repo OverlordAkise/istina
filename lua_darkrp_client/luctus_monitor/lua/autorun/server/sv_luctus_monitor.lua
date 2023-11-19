@@ -126,11 +126,12 @@ function LuctusMonitorDo()
     local server_avgping_c = 0
     
     for k,v in pairs(LUCTUS_MONITOR_PLAYERS) do
-        
+        if v.fpsavg > 1 and v.fpsavg ~= 17 then
+            server_avgfps = server_avgfps + v.fpsavg
+            server_avgfps_c = server_avgfps_c + 1
+        end
         server_avgping = server_avgping + v.pingcur
-        server_avgfps = server_avgfps + v.fpsavg
         server_avgping_c = server_avgping_c + 1
-        server_avgfps_c = server_avgfps_c + 1
         if not player.GetBySteamID(k) then
             v.online = false --left already
         end

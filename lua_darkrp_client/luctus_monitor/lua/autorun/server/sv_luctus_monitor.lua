@@ -61,6 +61,7 @@ local weaponkills = {}
 local luctusJoinCache = {}
 local luctusJoins = {}
 local luctusBans = {}
+local plyjobstats = {} --v2 jobstats
 
 function LuctusMonitorStart()
     timer.Create("luctus_monitor_timer",180,0,function()
@@ -178,6 +179,7 @@ function LuctusMonitorDo()
     end
     data["weaponkills"] = weaponkills
     data["jobs"] = jobStats
+    data["plyjobs"] = LuctusMonitorGetJobStatsV2()
     data["joinstats"] = luctusJoins
     data["bans"] = luctusBans
     
@@ -211,6 +213,10 @@ function LuctusMonitorDo()
     jobswitches = {}
     luctusJoins = {}
     luctusBans = {}
+    plyjobstats = {}
+    for k,ply in ipairs(plyjobstats) do
+        plyjobstats[ply:SteamID()] = {}
+    end
     LUCTUS_MONITOR_PLAYERS = {}
     lm_deaths = 0
 end
@@ -330,15 +336,18 @@ hook.Add("OnNPCKilled", "luctus_monitor_extra",function(npc, attacker, inflictor
 end)
 
 
---Jobstats
+--Jobstats (+v2 for now)
 
 hook.Add("PlayerInitialSpawn","luctus_monitor_extra",function(ply)
     ply.switchedJob = CurTime()
+    ply.timeInCurJob = CurTime()
+    plyjobstats[ply:SteamID()] = {}
 end)
 
 hook.Add("OnPlayerChangedTeam","luctus_monitor_extra",function(ply,before,after)
     local beforeName = team.GetName(before)
     local afterName = team.GetName(after)
+    local steamid = ply:SteamID()
     --switches
     if not jobswitches[afterName] then
         jobswitches[afterName] = 1
@@ -351,17 +360,55 @@ hook.Add("OnPlayerChangedTeam","luctus_monitor_extra",function(ply,before,after)
     end
     jobtimes[beforeName] = jobtimes[beforeName] + math.Round(CurTime()-ply.switchedJob)
     ply.switchedJob = CurTime()
+    --jobtimes v2
+    
+    if not plyjobstats[steamid][beforeName] then
+        plyjobstats[steamid][beforeName] = 1
+    end
+    plyjobstats[steamid][beforeName] = plyjobstats[steamid][beforeName] + math.Round(CurTime()-ply.timeInCurJob)
+    ply.timeInCurJob = CurTime()
 end)
 
 hook.Add("PlayerDisconnect","luctus_monitor_extra",function(ply)
-    if IsValid(ply) then
-        local jobname = team.GetName(ply:Team())
-        if not jobtimes[jobname] then
-            jobtimes[jobname] = 0
-        end
-        jobtimes[jobname] = jobtimes[jobname] + math.Round(CurTime()-ply.switchedJob)
+    if not IsValid(ply) then return end
+    local jobname = team.GetName(ply:Team())
+    local steamid = ply:SteamID()
+    if not jobtimes[jobname] then
+        jobtimes[jobname] = 0
     end
+    jobtimes[jobname] = jobtimes[jobname] + math.Round(CurTime()-ply.switchedJob)
+    --jobtimes v2
+    if not plyjobstats[steamid][jobname] then
+        plyjobstats[steamid][jobname] = 1
+    end
+    plyjobstats[steamid][jobname] = plyjobstats[steamid][jobname] + math.Round(CurTime()-ply.timeInCurJob)
 end)
+
+function LuctusMonitorGetJobStatsV2()
+    local steamid = ""
+    local jobname = ""
+    for k,ply in ipairs(player.GetHumans()) do
+        if not ply.timeInCurJob then continue end
+        steamid = ply:SteamID()
+        jobname = team.GetName(ply:Team())
+        if not plyjobstats[steamid][jobname] then
+            plyjobstats[steamid][jobname] = 0
+        end
+        plyjobstats[steamid][jobname] = plyjobstats[steamid][jobname] + math.Round(CurTime()-ply.timeInCurJob)
+        ply.timeInCurJob = CurTime()
+    end
+    local returnTab = {}
+    for steamid,jobs in pairs(plyjobstats) do
+        for job,playtime in pairs(jobs) do
+            table.insert(returnTab,{
+                steamid = steamid,
+                jobname = job,
+                playtime = playtime,
+            })
+        end
+    end
+    return returnTab
+end
 
 
 --Joinstats

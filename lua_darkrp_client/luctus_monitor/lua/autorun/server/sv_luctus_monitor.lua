@@ -362,7 +362,7 @@ hook.Add("OnPlayerChangedTeam","luctus_monitor_extra",function(ply,before,after)
     jobtimes[beforeName] = jobtimes[beforeName] + math.Round(CurTime()-ply.switchedJob)
     ply.switchedJob = CurTime()
     --jobtimes v2
-    
+    if not plyjobstats[steamid] then plyjobstats[steamid] = {} end
     if not plyjobstats[steamid][beforeName] then
         plyjobstats[steamid][beforeName] = 1
     end
@@ -392,6 +392,7 @@ function LuctusMonitorGetJobStatsV2()
         if not ply.timeInCurJob then continue end
         steamid = ply:SteamID()
         jobname = team.GetName(ply:Team())
+	if not plyjobstats[steamid] then plyjobstats[steamid] = {} end
         if not plyjobstats[steamid][jobname] then
             plyjobstats[steamid][jobname] = 0
         end

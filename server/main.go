@@ -67,7 +67,7 @@ func SetupRouter(logger *zap.Logger) *gin.Engine {
 			return
 		}
 		data.Serverip = c.ClientIP()
-		InsertTTTStat(data)
+		InsertTTTStat(data, logger)
 		c.String(200, "OK")
 	})
 	r.POST("/linuxstat", func(c *gin.Context) {
@@ -112,7 +112,7 @@ func SetupRouter(logger *zap.Logger) *gin.Engine {
 			return
 		}
 		ls.Serverip = c.ClientIP()
-		InsertDarkRPStat(ls)
+		InsertDarkRPStat(ls, logger)
 		c.String(200, "OK")
 	})
 	r.POST("/luctuslogs", func(c *gin.Context) {
@@ -127,7 +127,7 @@ func SetupRouter(logger *zap.Logger) *gin.Engine {
 			return
 		}
 		ll.Serverip = c.ClientIP()
-		InsertLuctusLogs(ll)
+		InsertLuctusLogs(ll, logger)
 		c.String(200, "OK")
 	})
 	r.POST("/playeravatar", func(c *gin.Context) {
@@ -488,8 +488,20 @@ func InsertLuaError(ls LuctusLuaError) {
 	}
 }
 
-func InsertDarkRPStat(ls DarkRPStat) {
+func InsertDarkRPStat(ls DarkRPStat, logger *zap.Logger) {
 	tx := db.MustBegin()
+	defer func() {
+		panic("ass")
+		if r := recover().(error); r != nil {
+			logger.Error("Error during InsertDarkRPStat SQL",
+				zap.String("error", r.Error()),
+			)
+			err := tx.Rollback()
+			if err != nil {
+				panic(err)
+			}
+		}
+	}()
 	_, err := tx.NamedExec("INSERT INTO rpserver(serverid,serverip,map,gamemode,tickrateset,tickratecur,entscount,plycount,uptime,avgfps,avgping,luaramb,luarama) VALUES(:serverid,:serverip,:map,:gamemode,:tickrateset,:tickratecur,:entscount,:plycount,:uptime,:avgfps,:avgping,:luaramb,:luarama)", ls)
 	if err != nil {
 		panic(err)
@@ -527,8 +539,19 @@ func InsertDarkRPStat(ls DarkRPStat) {
 	}
 }
 
-func InsertLuctusLogs(ll LuctusLogs) {
+func InsertLuctusLogs(ll LuctusLogs, logger *zap.Logger) {
 	tx := db.MustBegin()
+	defer func() {
+		if r := recover().(error); r != nil {
+			logger.Error("Error during InsertLuctusLogs SQL",
+				zap.String("error", r.Error()),
+			)
+			err := tx.Rollback()
+			if err != nil {
+				panic(err)
+			}
+		}
+	}()
 	for _, v := range ll.Logs {
 		tx.MustExec("INSERT IGNORE INTO luctuslog(serverid,serverip,date,cat,msg) VALUES(?,?,?,?,?)", ll.Serverid, ll.Serverip, v.Date, v.Cat, v.Msg)
 	}
@@ -542,8 +565,19 @@ func InsertPlayerAvatar(pa PlayerAvatar) {
 	db.MustExec("INSERT INTO playeravatar(steamid,steamid64,image) VALUES(?,?,?) ON DUPLICATE KEY UPDATE image=?;", pa.Steamid, pa.Steamid64, pa.Image, pa.Image)
 }
 
-func InsertTTTStat(data TTTStat) {
+func InsertTTTStat(data TTTStat, logger *zap.Logger) {
 	tx := db.MustBegin()
+	defer func() {
+		if r := recover().(error); r != nil {
+			logger.Error("Error during InsertTTTStat SQL",
+				zap.String("error", r.Error()),
+			)
+			err := tx.Rollback()
+			if err != nil {
+				panic(err)
+			}
+		}
+	}()
 	_, err := tx.NamedExec("INSERT INTO tttserver(serverid,serverip,map,gamemode,roundstate,roundid,roundresult,tickrateset,tickratecur,entscount,plycount,avgfps,avgping,luaramb,luarama,innocent,traitor,detective,spectator,ainnocent,atraitor,adetective) VALUES(:serverid,:serverip,:map,:gamemode,:roundstate,:roundid,:roundresult,:tickrateset,:tickratecur,:entscount,:plycount,:avgfps,:avgping,:luaramb,:luarama,:innocent,:traitor,:detective,:spectator,:ainnocent,:atraitor,:adetective)", data)
 	if err != nil {
 		panic(err)

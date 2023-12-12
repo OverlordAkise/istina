@@ -101,12 +101,15 @@ func SetupRouter(logger *zap.Logger) *gin.Engine {
 		c.String(200, "OK")
 	})
 	r.POST("/darkrpstat", func(c *gin.Context) {
+		body, _ := io.ReadAll(c.Request.Body)
+		c.Request.Body = io.NopCloser(bytes.NewReader(body))
 		var ls DarkRPStat
 		err := c.BindJSON(&ls)
 		if err != nil {
 			logger.Error("Couldn't bind JSON",
 				zap.String("url", c.Request.URL.Path),
 				zap.String("ip", c.ClientIP()),
+				zap.String("body", string(body)),
 			)
 			c.String(400, "INVALID DATA")
 			return

@@ -147,11 +147,14 @@ function LuctusMonitorDo()
     data["uptime"] = CurTime()
     data["serverid"] = LUCTUS_MONITOR_SERVER_ID
     if server_avgping_c == 0 then
-        data["avgfps"] = 0
         data["avgping"] = 0
     else
-        data["avgfps"] = server_avgfps/server_avgfps_c
         data["avgping"] = server_avgping/server_avgping_c
+    end
+    if server_avgfps_c == 0 or server_avgfps == 0 then
+        data["avgfps"] = 0
+    else
+        data["avgfps"] = server_avgfps/server_avgfps_c
     end
     data["deaths"] = lm_deaths
     

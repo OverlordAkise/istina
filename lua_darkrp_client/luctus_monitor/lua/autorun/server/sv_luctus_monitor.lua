@@ -499,6 +499,19 @@ hook.Add("SAM.BannedSteamID", "luctus_monitor_bans", function(steamid, unban_dat
     })
 end)
 
+hook.Add("Gextension_Ban","luctus_log_gexban",function(steamid64, length, reason, steamid64_admin, time)
+    local victimid = util.SteamIDFrom64(steamid64)
+    local adminid = util.SteamIDFrom64(steamid64_admin or "")
+    
+    table.insert(luctusBans,{
+        ["admin"] = adminid,
+        ["target"] = victimid,
+        ["reason"] = reason,
+        ["bantime"] = length,
+        ["curtime"] = os.time(), --why is time a string?
+    })
+end)
+
 --Avatar
 util.AddNetworkString("luctus_istina_avatar")
 hook.Add("OnPlayerChangedTeam","luctus_istina_avatar",function(ply,bt,at)

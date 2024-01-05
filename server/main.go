@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
@@ -494,7 +495,6 @@ func InsertLuaError(ls LuctusLuaError) {
 func InsertDarkRPStat(ls DarkRPStat, logger *zap.Logger) {
 	tx := db.MustBegin()
 	defer func() {
-		panic("ass")
 		if r := recover().(error); r != nil {
 			logger.Error("Error during InsertDarkRPStat SQL",
 				zap.String("error", r.Error()),

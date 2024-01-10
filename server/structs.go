@@ -42,11 +42,11 @@ type DarkRPStat struct {
 type DarkRPPlayer struct {
 	Id                     float64 `json:"id" db:"id"`
 	Ts                     string  `json:"ts" db:"ts"`
-	Serverid               string  `json:"serverid"  db:"serverid" binding:"required"`
-	Steamid                string  `json:"steamid"  db:"steamid"`
-	Nick                   string  `json:"nick"  db:"nick"`
-	Job                    string  `json:"job"  db:"job"`
-	Rank                   string  `json:"rank"  db:"rank"`
+	Serverid               string  `json:"serverid" db:"serverid" binding:"required"`
+	Steamid                string  `json:"steamid" db:"steamid"`
+	Nick                   string  `json:"nick" db:"nick"`
+	Job                    string  `json:"job" db:"job"`
+	Rank                   string  `json:"rank" db:"rank"`
 	Fpsavg                 float64 `json:"fpsavg" db:"fpsavg"`
 	Fpslow                 float64 `json:"fpslow" db:"fpslow"`
 	Fpshigh                float64 `json:"fpshigh" db:"fpshigh"`
@@ -55,7 +55,7 @@ type DarkRPPlayer struct {
 	Luaramb                float64 `json:"luaramb" db:"luaramb"`
 	Luarama                float64 `json:"luarama" db:"luarama"`
 	Packetslost            float64 `json:"packetslost" db:"packetslost"`
-	Os                     string  `json:"os" form:"os"`
+	Os                     string  `json:"os" db:"os"`
 	Country                string  `json:"country" db:"country"`
 	Screensize             string  `json:"screensize" db:"screensize"`
 	Screenmode             string  `json:"screenmode" db:"screenmode"`
@@ -186,10 +186,10 @@ type TTTStat struct {
 type TTTPlayer struct {
 	Id                     float64 `json:"id" db:"id"`
 	Ts                     string  `json:"ts" db:"ts"`
-	Serverid               string  `json:"serverid"  db:"serverid" binding:"required"`
-	Steamid                string  `json:"steamid"  db:"steamid"`
-	Nick                   string  `json:"nick"  db:"nick"`
-	Role                   string  `json:"role"  db:"role"`
+	Serverid               string  `json:"serverid" db:"serverid" binding:"required"`
+	Steamid                string  `json:"steamid" db:"steamid"`
+	Nick                   string  `json:"nick" db:"nick"`
+	Role                   string  `json:"role" db:"role"`
 	Roundid                string  `json:"roundid" db:"roundid"`
 	Roundstate             float64 `json:"roundstate" db:"roundstate"`
 	Fpsavg                 float64 `json:"fpsavg" db:"fpsavg"`
@@ -200,7 +200,7 @@ type TTTPlayer struct {
 	Luaramb                float64 `json:"luaramb" db:"luaramb"`
 	Luarama                float64 `json:"luarama" db:"luarama"`
 	Packetslost            float64 `json:"packetslost" db:"packetslost"`
-	Os                     string  `json:"os" form:"os"`
+	Os                     string  `json:"os" db:"os"`
 	Country                string  `json:"country" db:"country"`
 	Screensize             string  `json:"screensize" db:"screensize"`
 	Screenmode             string  `json:"screenmode" db:"screenmode"`

@@ -495,11 +495,12 @@ func InsertLuaError(le LuctusLuaError) {
 func InsertDarkRPStat(ds DarkRPStat, logger *zap.Logger) {
 	tx := db.MustBegin()
 	defer func() {
-		if r := recover().(error); r != nil {
+		if r := recover(); r != nil {
+			err := r.(error)
 			logger.Error("Error during InsertDarkRPStat SQL",
-				zap.String("error", r.Error()),
+				zap.String("error", err.Error()),
 			)
-			err := tx.Rollback()
+			err = tx.Rollback()
 			if err != nil {
 				panic(err)
 			}
@@ -546,11 +547,12 @@ func InsertDarkRPStat(ds DarkRPStat, logger *zap.Logger) {
 func InsertLuctusLogs(ll LuctusLogs, logger *zap.Logger) {
 	tx := db.MustBegin()
 	defer func() {
-		if r := recover().(error); r != nil {
+		if r := recover(); r != nil {
+			err := r.(error)
 			logger.Error("Error during InsertLuctusLogs SQL",
-				zap.String("error", r.Error()),
+				zap.String("error", err.Error()),
 			)
-			err := tx.Rollback()
+			err = tx.Rollback()
 			if err != nil {
 				panic(err)
 			}
@@ -572,11 +574,12 @@ func InsertPlayerAvatar(pa PlayerAvatar) {
 func InsertTTTStat(ts TTTStat, logger *zap.Logger) {
 	tx := db.MustBegin()
 	defer func() {
-		if r := recover().(error); r != nil {
+		if r := recover(); r != nil {
+			err := r.(error)
 			logger.Error("Error during InsertTTTStat SQL",
-				zap.String("error", r.Error()),
+				zap.String("error", err.Error()),
 			)
-			err := tx.Rollback()
+			err = tx.Rollback()
 			if err != nil {
 				panic(err)
 			}

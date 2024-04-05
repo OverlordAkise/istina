@@ -6,8 +6,9 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	"io"
+	"math"
 	//Config file
-	"io/ioutil"
+	"os"
 	"sigs.k8s.io/yaml"
 	//Discord Webhooks
 	"bytes"
@@ -31,7 +32,7 @@ var db *sqlx.DB
 var config Config
 var LUCTUSDEBUG bool = false
 var httpclient = http.Client{}
-var discordURLRegex = regexp.MustCompile("^https:\\/\\/discord.com\\/api\\/webhooks\\/\\d+\\/[-_a-zA-Z0-9]+$")
+var discordURLRegex = regexp.MustCompile(`^https:\/\/discord.com\/api\/webhooks\/\d+\/[-_a-zA-Z0-9]+$`)
 
 func SetupRouter(logger *zap.Logger) *gin.Engine {
 	r := gin.New()
@@ -182,7 +183,7 @@ func SetupRouter(logger *zap.Logger) *gin.Engine {
 
 func main() {
 	fmt.Println("Starting!")
-	configfile, err := ioutil.ReadFile("./config.yaml")
+	configfile, err := os.ReadFile("./config.yaml")
 	if err != nil {
 		panic(err)
 	}
@@ -208,10 +209,13 @@ func main() {
 	gin.SetMode(gin.ReleaseMode)
 	InitDatabase(config.Mysql)
 	r := SetupRouter(logger)
-	r.SetTrustedProxies([]string{"127.0.0.1", "::1"})
+	err = r.SetTrustedProxies([]string{"127.0.0.1", "::1"})
+	if err != nil {
+		panic(err)
+	}
 	fmt.Println("Now listening on *:" + config.Port)
 	logger.Info("Starting server on *:" + config.Port)
-	r.Run("0.0.0.0:" + config.Port)
+	fmt.Println(r.Run("0.0.0.0:" + config.Port))
 }
 
 func InitDatabase(conString string) {
@@ -224,7 +228,6 @@ func InitDatabase(conString string) {
 	if err != nil {
 		panic(err.Error())
 	}
-	db.Ping()
 
 	db.MustExec(`CREATE TABLE IF NOT EXISTS linux(
     id SERIAL,
@@ -511,6 +514,12 @@ func InsertDarkRPStat(ds DarkRPStat, logger *zap.Logger) {
 	if err != nil {
 		panic(err)
 	}
+
+	for i, ply := range ds.Players {
+		ds.Players[i].Money = math.Max(ply.Money, -9223372036854775807)
+		ds.Players[i].Money = math.Min(ply.Money, 9223372036854775807)
+	}
+
 	if len(ds.Players) > 0 {
 		_, err = tx.NamedExec("INSERT INTO rpplayer (serverid,steamid,nick,job,rank,fpsavg,fpslow,fpshigh,pingavg,pingcur,luaramb,luarama,packetslost,os,country,screensize,screenmode,jitver,ip,playtime,playtimel,online,hookthink,hooktick,hookhudpaint,hookhudpaintbackground,hookpredrawhud,hookcreatemove,concommands,funccount,addoncount,addonsize, warns, money) VALUES (:serverid, :steamid, :nick, :job, :rank, :fpsavg, :fpslow, :fpshigh, :pingavg, :pingcur, :luaramb, :luarama, :packetslost, :os, :country, :screensize, :screenmode, :jitver, :ip, :playtime, :playtimel, :online, :hookthink, :hooktick, :hookhudpaint, :hookhudpaintbackground, :hookpredrawhud, :hookcreatemove, :concommands, :funccount, :addoncount, :addonsize, :warns, :money)", ds.Players)
 		if err != nil {

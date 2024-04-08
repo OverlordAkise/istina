@@ -231,7 +231,7 @@ func InitDatabase(conString string) {
 
 	db.MustExec(`CREATE TABLE IF NOT EXISTS linux(
     id SERIAL,
-    ts TIMESTAMP,
+    ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
     serverip VARCHAR(50),
     realserverip VARCHAR(50),
     cpuidle DOUBLE,
@@ -248,7 +248,7 @@ func InitDatabase(conString string) {
 
 	db.MustExec(`CREATE TABLE IF NOT EXISTS luaerror(
     id SERIAL,
-    ts TIMESTAMP,
+    ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
     serverip VARCHAR(50),
     hash VARCHAR(20),
     error TEXT,
@@ -264,7 +264,7 @@ func InitDatabase(conString string) {
 
 	db.MustExec(`CREATE TABLE IF NOT EXISTS rpserver(
     id SERIAL,
-    ts TIMESTAMP,
+    ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
     serverid VARCHAR(50),
     serverip VARCHAR(50),
     map VARCHAR(50),
@@ -321,7 +321,7 @@ func InitDatabase(conString string) {
 
 	db.MustExec(`CREATE TABLE IF NOT EXISTS weaponkills(
     id SERIAL,
-    ts TIMESTAMP,
+    ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
     serverid VARCHAR(50),
     weaponclass VARCHAR(255),
     victim VARCHAR(50),
@@ -330,7 +330,7 @@ func InitDatabase(conString string) {
 
 	db.MustExec(`CREATE TABLE IF NOT EXISTS jobstats(
     id SERIAL,
-    ts TIMESTAMP,
+    ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
     serverid VARCHAR(50),
     jobname VARCHAR(255),
     switchedto BIGINT,
@@ -350,7 +350,7 @@ func InitDatabase(conString string) {
 
 	db.MustExec(`CREATE TABLE IF NOT EXISTS bans(
     id SERIAL,
-    ts TIMESTAMP,
+    ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
     serverid VARCHAR(50),
     admin VARCHAR(255),
     target VARCHAR(50),
@@ -363,7 +363,7 @@ func InitDatabase(conString string) {
 
 	db.MustExec(`CREATE TABLE IF NOT EXISTS luctuslog(
     id SERIAL,
-    ts TIMESTAMP,
+    ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
     date VARCHAR(24),
     serverid VARCHAR(50),
     serverip VARCHAR(50),
@@ -375,7 +375,7 @@ func InitDatabase(conString string) {
 
 	db.MustExec(`CREATE TABLE IF NOT EXISTS tttserver(
     id SERIAL,
-    ts TIMESTAMP,
+    ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
     serverid VARCHAR(50),
     serverip VARCHAR(50),
     map VARCHAR(50),
@@ -402,7 +402,7 @@ func InitDatabase(conString string) {
 
 	db.MustExec(`CREATE TABLE IF NOT EXISTS tttplayer(
     id SERIAL,
-    ts TIMESTAMP,
+    ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
     serverid VARCHAR(50),
     steamid VARCHAR(50),
     nick VARCHAR(50),
@@ -444,7 +444,7 @@ func InitDatabase(conString string) {
 
 	db.MustExec(`CREATE TABLE IF NOT EXISTS tttkills(
     id SERIAL,
-    ts TIMESTAMP,
+    ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
     serverid VARCHAR(50),
     roundstate INT,
     roundid VARCHAR(20),
@@ -460,7 +460,7 @@ func InitDatabase(conString string) {
 
 	db.MustExec(`CREATE TABLE IF NOT EXISTS joinstats(
     id SERIAL,
-    ts TIMESTAMP,
+    ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
     serverid VARCHAR(50),
     steamid VARCHAR(50),
     jointime BIGINT,
@@ -471,7 +471,7 @@ func InitDatabase(conString string) {
 
 	db.MustExec(`CREATE TABLE IF NOT EXISTS playeravatar(
     id SERIAL,
-    ts TIMESTAMP,
+    ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
     steamid VARCHAR(50),
     steamid64 VARCHAR(50),
     image TEXT,

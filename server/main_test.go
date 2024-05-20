@@ -3,20 +3,18 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	//db,config
 	"github.com/gin-gonic/gin"
-	"io/ioutil"
 	"sigs.k8s.io/yaml"
-	//logger
 	"go.uber.org/zap"
 )
 
 var darkrpbodystring = `{"avgping":2.5,"players":[{"pingcur":0.0,"addonsize":-1.0,"screenmode":"","playtimel":0.0,"concommands":-1.0,"fpsavg":-1.0,"fpshigh":-1.0,"funccount":-1.0,"country":"","ip":"Error!","playtime":0.0,"job":"","jitver":"","hookhudpaintbackground":-1.0,"addoncount":-1.0,"screensize":"","nick":"Bot03","pingavg":-1.0,"hookhudpaint":-1.0,"hooktick":-1.0,"hookthink":-1.0,"online":true,"serverid":"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx","os":"","fpslow":-1.0,"hookpredrawhud":-1.0,"packetslost":0.0,"hookcreatemove":-1.0,"luarama":-1.0,"luaramb":-1.0,"steamid":"BOT"},{"pingcur":5.0,"addonsize":4024.0,"screenmode":"window","playtimel":49.0,"concommands":42.0,"fpsavg":-2048.0,"fpshigh":256.0,"funccount":3208.0,"country":"AT","ip":"loopback","playtime":53.0,"job":"Medic","jitver":"LuaJIT 2.0.4","hookhudpaintbackground":-1.0,"addoncount":106.0,"screensize":"1920x1080","nick":"Medicman","pingavg":8.0,"hookhudpaint":12.0,"hooktick":3.0,"hookthink":6.0,"online":true,"serverid":"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx","os":"windows","fpslow":165.0,"hookpredrawhud":-1.0,"packetslost":0.0,"hookcreatemove":-1.0,"luarama":29571.5,"luaramb":54228.3,"steamid":"STEAM_0:0:12345678"}],"jobs":[{"jobname":"Medic","switches":1.0,"playtime":43.0},{"jobname":"Citizen","playtime":59.0}],"serverid":"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx","luaramb":16712.677734375,"tickrateset":66.66666815678282,"plycount":2.0,"uptime":63.314998626708987,"gamemode":"darkrp","luarama":9758.3076171875,"deaths":4.0,"avgfps":-1024.5,"map":"gm_construct","tickratecur":66.70377620082623,"weaponkills":[{"wepclass":"m9k_acr","victim":"BOT","attacker":"STEAM_0:0:12345678"},{"wepclass":"m9k_acr","victim":"BOT","attacker":"STEAM_0:0:12345678"},{"wepclass":"m9k_ragingbull","victim":"BOT","attacker":"STEAM_0:0:12345678"},{"wepclass":"m9k_ragingbull","victim":"BOT","attacker":"STEAM_0:0:12345678"}],"entscount":3985.0}`
 var darkrpstattestbody *bytes.Buffer = bytes.NewBufferString(darkrpbodystring)
-var jobstatbody *bytes.Buffer = bytes.NewBufferString(darkrpbodystring)
+// var jobstatbody *bytes.Buffer = bytes.NewBufferString(darkrpbodystring)
 
 var tttstattestbody *bytes.Buffer = bytes.NewBufferString(`{"ainnocent":1.0,"innocent":1.0,"spectator":1.0,"plycount":2.0,"players":[{"pingavg":5.0,"screenmode":"window","fpsavg":295.0,"luarama":22215.064453125,"role":"innocent","concommands":39.0,"addoncount":50.0,"hookpredrawhud":-1.0,"nick":"Medicman","funccount":3224.0,"steamid":"STEAM_0:0:12345678","pingcur":5.0,"addonsize":1721.0,"country":"AT","ip":"loopback","playtime":204.0,"roundid":"20230330135514","jitver":"LuaJIT 2.0.4","hookhudpaintbackground":-1.0,"hookcreatemove":-1.0,"screensize":"1600x900","sv_allowcslua":"1","hookcount":172.0,"host_timescale":"1.0","fpslow":243.0,"luaramb":38595.09765625,"roundstate":4.0,"vcollide_wireframe":"0","hookhudpaint":5.0,"packetslost":0.0,"os":"windows","hookthink":4.0,"sv_cheats":"0","serverid":"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx","hooktick":2.0,"fpshigh":285.0}],"tickratecur":66.63189814221598,"atraitor":0.0,"roundid":"20230330135514","traitor":0.0,"entscount":441.0,"avgping":5.0,"detective":0.0,"luarama":8679.4794921875,"tickrateset":66.66666815678282,"roundstate":4.0,"uptime":207.02999877929688,"gamemode":"terrortown","luaramb":11542.5341796875,"kills":[{"serverid":"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx","wepclass":"m9k_mossberg590","victim":"BOT","roundid":"20230330135514","attackerrole":"innocent","victimrole":"traitor","roundstate":3.0,"attacker":"STEAM_0:0:12345678"}],"avgfps":295.0,"adetective":0.0,"roundresult":3.0,"serverid":"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx","map":"ttt_lego"}
 `)
@@ -31,7 +29,7 @@ type NumberValue struct {
 var r *gin.Engine
 
 func TestMain(m *testing.M) {
-	configfile, err := ioutil.ReadFile("./configtest.yaml")
+	configfile, err := os.ReadFile("./configtest.yaml")
 	if err != nil {
 		panic(err)
 	}

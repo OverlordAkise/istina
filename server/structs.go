@@ -1,20 +1,5 @@
 package main
 
-type LuctusLinuxStat struct {
-	Serverip        string  `json:"serverip"`
-	Realserverip    string  `json:"realserverip"`
-	CpuIdle         int     `json:"cpuidle"`
-	CpuSteal        float64 `json:"cpusteal"`
-	CpuIowait       float64 `json:"cpuiowait"`
-	RamTotal        int     `json:"ramtotal"`
-	RamUsed         int     `json:"ramused"`
-	RamFree         int     `json:"ramfree"`
-	DiskTotal       int     `json:"disktotal"`
-	DiskUsed        int     `json:"diskused"`
-	DiskFree        int     `json:"diskfree"`
-	DiskPercentUsed int     `json:"diskpercentused"`
-}
-
 type DarkRPStat struct {
 	Id          float64         `json:"id" db:"id"`
 	Ts          string          `json:"ts" db:"ts"`

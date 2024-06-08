@@ -72,21 +72,6 @@ func SetupRouter(logger *zap.Logger) *gin.Engine {
 		InsertTTTStat(ts, logger)
 		c.String(200, "OK")
 	})
-	r.POST("/linuxstat", func(c *gin.Context) {
-		var ls LuctusLinuxStat
-		err := c.BindJSON(&ls)
-		if err != nil {
-			logger.Error("Couldn't bind JSON",
-				zap.String("url", c.Request.URL.Path),
-				zap.String("ip", c.ClientIP()),
-			)
-			c.String(400, "INVALID DATA")
-			return
-		}
-		ls.Realserverip = c.ClientIP()
-		InsertLinuxStats(ls)
-		c.String(200, "OK")
-	})
 	r.POST("/luaerror", func(c *gin.Context) {
 		var le LuctusLuaError
 		err := c.BindJSON(&le)
@@ -228,23 +213,6 @@ func InitDatabase(conString string) {
 	if err != nil {
 		panic(err.Error())
 	}
-
-	db.MustExec(`CREATE TABLE IF NOT EXISTS linux(
-    id SERIAL,
-    ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
-    serverip VARCHAR(50),
-    realserverip VARCHAR(50),
-    cpuidle DOUBLE,
-    cpusteal DOUBLE,
-    cpuiowait DOUBLE,
-    ramtotal INT,
-    ramused INT,
-    ramfree INT,
-    diskfree INT,
-    diskused INT,
-    disktotal INT,
-    diskpercentused INT
-    )`)
 
 	db.MustExec(`CREATE TABLE IF NOT EXISTS luaerror(
     id SERIAL,
@@ -479,13 +447,6 @@ func InitDatabase(conString string) {
     )`)
 
 	fmt.Println("DB initialized!")
-}
-
-func InsertLinuxStats(ls LuctusLinuxStat) {
-	_, err := db.NamedExec("INSERT INTO linux(serverip,realserverip,cpuidle,cpusteal,cpuiowait,ramtotal,ramused,ramfree,diskfree,diskused,disktotal,diskpercentused) VALUES(:serverip,:realserverip,:cpuidle,:cpusteal,:cpuiowait,:ramtotal,:ramused,:ramfree,:diskfree,:diskused,:disktotal,:diskpercentused)", ls)
-	if err != nil {
-		panic(err)
-	}
 }
 
 func InsertLuaError(le LuctusLuaError) {

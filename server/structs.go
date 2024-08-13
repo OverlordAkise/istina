@@ -22,6 +22,7 @@ type DarkRPStat struct {
 	Weaponkills []DarkRPKills   `json:"weaponkills" db:"weaponkills"`
 	Joinstats   []Joinstatistic `json:"joinstats" db:"joinstats"`
 	Bans        []UlxBan        `json:"bans" db:"bans"`
+	Warns       []Warn          `json:"warns" db:"warns"`
 }
 
 type DarkRPPlayer struct {
@@ -90,6 +91,12 @@ type UlxBan struct {
 	Reason  string  `json:"reason" db:"reason"`
 	Bantime float64 `json:"bantime" db:"bantime"`
 	Curtime float64 `json:"curtime" db:"curtime"`
+}
+
+type Warn struct {
+	Admin   string  `json:"admin" db:"admin"`
+	Target  string  `json:"target" db:"target"`
+	Reason  string  `json:"reason" db:"reason"`
 }
 
 type LuctusLuaError struct {

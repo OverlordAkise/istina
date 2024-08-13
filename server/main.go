@@ -326,6 +326,15 @@ func InitDatabase(conString string) {
     bantime BIGINT,
     curtime BIGINT
     )`)
+    
+	db.MustExec(`CREATE TABLE IF NOT EXISTS warns(
+    id SERIAL,
+    ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
+    serverid VARCHAR(50),
+    admin VARCHAR(50),
+    target VARCHAR(50),
+    reason TEXT
+    )`)
 
 	///Logs
 
@@ -484,7 +493,7 @@ func InsertDarkRPStat(ds DarkRPStat, logger *zap.Logger) {
 	if len(ds.Players) > 0 {
 		_, err = tx.NamedExec("INSERT INTO rpplayer (serverid,steamid,nick,job,rank,fpsavg,fpslow,fpshigh,pingavg,pingcur,luaramb,luarama,packetslost,os,country,screensize,screenmode,jitver,ip,playtime,playtimel,online,hookthink,hooktick,hookhudpaint,hookhudpaintbackground,hookpredrawhud,hookcreatemove,concommands,funccount,addoncount,addonsize, warns, money) VALUES (:serverid, :steamid, :nick, :job, :rank, :fpsavg, :fpslow, :fpshigh, :pingavg, :pingcur, :luaramb, :luarama, :packetslost, :os, :country, :screensize, :screenmode, :jitver, :ip, :playtime, :playtimel, :online, :hookthink, :hooktick, :hookhudpaint, :hookhudpaintbackground, :hookpredrawhud, :hookcreatemove, :concommands, :funccount, :addoncount, :addonsize, :warns, :money)", ds.Players)
 		if err != nil {
-			panic(err)
+			logger.Error("sql error during player insert",zap.String("error", err.Error()))
 		}
 	}
 
@@ -506,6 +515,10 @@ func InsertDarkRPStat(ds DarkRPStat, logger *zap.Logger) {
 
 	for _, v := range ds.Bans {
 		tx.MustExec("INSERT IGNORE INTO bans(serverid,admin,target,reason,bantime,curtime) VALUES(?,?,?,?,?,?)", ds.Serverid, v.Admin, v.Target, v.Reason, v.Bantime, v.Curtime)
+	}
+    
+    for _, v := range ds.Warns {
+		tx.MustExec("INSERT IGNORE INTO warns(serverid,admin,target,reason) VALUES(?,?,?,?)", ds.Serverid, v.Admin, v.Target, v.Reason)
 	}
 
 	err = tx.Commit()

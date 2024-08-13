@@ -9,6 +9,21 @@ LUCTUS_MONITOR_URL = "http://localhost:7077/darkrpstat"
 LUCTUS_MONITOR_URL_AVATAR = "http://localhost:7077/playeravatar"
 
 
+------------------------
+
+LUCTUS_MONITOR_PLAYERS = {}
+local curTickrate = 0
+local deathsPerMonitor = 0
+local jobtimes = {}
+local jobswitches = {}
+local weaponkills = {}
+local luctusJoinCache = {}
+local luctusJoins = {}
+local luctusBans = {}
+local luctusWarns = {}
+local plyjobstats = {} --v2 jobstats
+local serverid = ""
+
 function LuctusDebugPrint(text)
     if LUCTUS_MONITOR_DEBUG then
         print(text)
@@ -38,11 +53,8 @@ else
     file.Write("luctus_monitor.txt",LUCTUS_MONITOR_SERVER_ID)
 end
 print("[luctus_monitor] ServerID: ",LUCTUS_MONITOR_SERVER_ID)
+serverid = LUCTUS_MONITOR_SERVER_ID
 
---for getting id remote
-concommand.Add("m_monitor", function(ply,cmd,args)
-    ply:PrintMessage(HUD_PRINTCONSOLE,LUCTUS_MONITOR_SERVER_ID)
-end)
 
 util.AddNetworkString("luctus_monitor_collect")
 util.AddNetworkString("luctus_monitor_connecttime")
@@ -53,15 +65,6 @@ timer.Create("luctus_monitor_autorestart",15,0,function()
         LuctusMonitorStart()
     end
 end)
-
-LUCTUS_MONITOR_PLAYERS = {}
-local jobtimes = {}
-local jobswitches = {}
-local weaponkills = {}
-local luctusJoinCache = {}
-local luctusJoins = {}
-local luctusBans = {}
-local plyjobstats = {} --v2 jobstats
 
 function LuctusMonitorStart()
     timer.Create("luctus_monitor_timer",180,0,function()
@@ -76,46 +79,33 @@ function LuctusMonitorStart()
 end
 
 --Monitor deaths
-local lm_deaths = 0
-hook.Add("PostPlayerDeath","luctus_monitor_stat",function(ply)
-    lm_deaths = lm_deaths + 1
+hook.Add("PostPlayerDeath","luctus_monitor_stat",function()
+    deathsPerMonitor = deathsPerMonitor + 1
 end)
-hook.Add("OnNPCKilled", "luctus_monitor_stat",function(npc, attacker, inflictor)
-    lm_deaths = lm_deaths + 1
+hook.Add("OnNPCKilled", "luctus_monitor_stat",function()
+    deathsPerMonitor = deathsPerMonitor + 1
 end)
 
 --Monitor Tickrate
-LUCTUS_MONITOR_CURRENT_TICKRATE = 0
 function GetCurrentTickrate()
-    local abc = {}
-    local LastCapture = 0
+    local ticks = {}
     local tickDelta = 0
     local lastTick = nil
-    hook.Add("Tick", "average_tickrate_calc", function()
+    hook.Add("Tick", "luctus_monitor_avg_tickrate", function()
         local sysTime = SysTime()
         if not lastTick then lastTick = SysTime() return end
         tickDelta = sysTime - lastTick
-        abc[#abc+1] = tickDelta
-        if #abc >= 100 then
+        ticks[#ticks+1] = tickDelta
+        lastTick = sysTime
+        if #ticks >= 100 then
             local all = 0
-            for k,v in pairs(abc) do
+            for k,v in pairs(ticks) do
                 all = all + v
             end
-            LUCTUS_MONITOR_CURRENT_TICKRATE = 1/(all/#abc)
+            curTickrate = 1/(all/#ticks)
             hook.Remove("Tick", "average_tickrate_calc")
         end
-        lastTick = sysTime
     end)
-end
-
-function LuctusMonitorGetActiveWarns(ply)
-    if LuctusWarnGetCount then
-        return LuctusWarnGetCount(ply:SteamID())
-    end
-    if AWarn and AWarn.GetPlayerActiveWarnings then
-        return AWarn:GetPlayerActiveWarnings(ply)
-    end
-    return -1
 end
 
 function LuctusMonitorDo()
@@ -141,11 +131,11 @@ function LuctusMonitorDo()
     data["gamemode"] = engine.ActiveGamemode()
     data["map"] = game.GetMap()
     data["tickrateset"] = 1/engine.TickInterval()
-    data["tickratecur"] = LUCTUS_MONITOR_CURRENT_TICKRATE
+    data["tickratecur"] = curTickrate
     data["entscount"] = #ents.GetAll()
     data["plycount"] = #player.GetAll()
     data["uptime"] = CurTime()
-    data["serverid"] = LUCTUS_MONITOR_SERVER_ID
+    data["serverid"] = serverid
     if server_avgping_c == 0 then
         data["avgping"] = 0
     else
@@ -156,7 +146,7 @@ function LuctusMonitorDo()
     else
         data["avgfps"] = server_avgfps/server_avgfps_c
     end
-    data["deaths"] = lm_deaths
+    data["deaths"] = deathsPerMonitor
     
     data["luaramb"] = collectgarbage("count")
     collectgarbage("collect")
@@ -164,7 +154,7 @@ function LuctusMonitorDo()
     
     
     --Jobtimes, weaponkills
-    for k,v in pairs(player.GetAll()) do
+    for k,v in ipairs(player.GetAll()) do
         local jobname = team.GetName(v:Team())
         if not jobtimes[jobname] then
             jobtimes[jobname] = 0
@@ -186,6 +176,7 @@ function LuctusMonitorDo()
     data["plyjobs"] = LuctusMonitorGetJobStatsV2()
     data["joinstats"] = luctusJoins
     data["bans"] = luctusBans
+    data["warns"] = luctusWarns
     
     --Sending
     local ret = HTTP({
@@ -211,18 +202,20 @@ function LuctusMonitorDo()
     LuctusDebugPrintTable(data)
     LuctusDebugPrint("Json:")
     LuctusDebugPrint(util.TableToJSON(data))
+    
     --reset
     weaponkills = {}
     jobtimes = {}
     jobswitches = {}
     luctusJoins = {}
     luctusBans = {}
+    luctusWarns = {}
     plyjobstats = {}
     for k,ply in ipairs(plyjobstats) do
         plyjobstats[ply:SteamID()] = {}
     end
     LUCTUS_MONITOR_PLAYERS = {}
-    lm_deaths = 0
+    deathsPerMonitor = 0
 end
 
 hook.Add("PlayerInitialSpawn","luctus_monitor_ply_init",function(ply)
@@ -249,7 +242,7 @@ hook.Add("PlayerInitialSpawn","luctus_monitor_ply_init",function(ply)
         ["screenmode"] = "",
         ["jitver"] = "",
         ["ip"] = ply:IPAddress(),
-        ["serverid"] = LUCTUS_MONITOR_SERVER_ID,
+        ["serverid"] = serverid,
         ["playtime"] = 0,
         ["playtimel"] = 0,
         ["online"] = true,
@@ -297,7 +290,7 @@ net.Receive("luctus_monitor_collect",function(len,ply)
         ["screenmode"] = string.sub(net.ReadString(),1,15),
         ["jitver"] = string.sub(net.ReadString(),1,20),
         ["ip"] = ply:IPAddress(),
-        ["serverid"] = LUCTUS_MONITOR_SERVER_ID,
+        ["serverid"] = serverid,
         ["playtime"] = math.Round(CurTime() - ply.lmonplaytime),
         ["playtimel"] = math.Round(CurTime() - ply.lmonplaytimel),
         ["online"] = true,
@@ -443,6 +436,47 @@ hook.Add("PlayerDisconnected","luctus_monitor_connecttime",function(ply)
         })
         luctusJoinCache[sid] = nil
     end
+end)
+
+
+-- Warns
+
+function LuctusMonitorGetActiveWarns(ply)
+    if LuctusWarnGetCount then
+        return LuctusWarnGetCount(ply:SteamID())
+    end
+    if AWarn and AWarn.GetPlayerActiveWarnings then
+        return AWarn:GetPlayerActiveWarnings(ply)
+    end
+    return -1
+end
+
+hook.Add("AWarnPlayerWarned", "luctus_monitor_warns", function(ply, AdminID, WarningReason)
+    local targetSID = ply:SteamID()
+    local adminSID = util.SteamIDFrom64(AdminID)
+    table.insert(luctusWarns,{
+        ["admin"] = adminSID,
+        ["target"] = targetSID,
+        ["reason"] = WarningReason,
+    })
+end)
+
+hook.Add("AWarnPlayerIDWarned", "luctus_monitor_warns", function(PlayerID, AdminID, WarningReason)
+    local targetSID = util.SteamIDFrom64(PlayerID)
+    local adminSID = util.SteamIDFrom64(AdminID)
+    table.insert(luctusWarns,{
+        ["admin"] = adminSID,
+        ["target"] = targetSID,
+        ["reason"] = WarningReason,
+    })
+end)
+
+hook.Add("LuctusWarnCreate", "luctus_monitor_warns", function(ply,tply,target,reason)
+    table.insert(luctusWarns,{
+        ["admin"] = ply:SteamID(),
+        ["target"] = target,
+        ["reason"] = reason,
+    })
 end)
 
 

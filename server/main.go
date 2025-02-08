@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	// "fmt"
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
@@ -21,19 +21,11 @@ import (
 )
 
 type Config struct {
-	Mysql   string `json:"mysql"`
-	Port    string `json:"port"`
-	Debug   bool   `json:"debug"`
-	Logfile string `json:"logfile"`
+	Mysql string `json:"mysql"`
+	Port  string `json:"port"`
 }
 
-var db *sqlx.DB
-var config Config
-var LUCTUSDEBUG bool = false
-var httpclient = http.Client{}
-var discordURLRegex = regexp.MustCompile(`^https:\/\/discord.com\/api\/webhooks\/\d+\/[-_a-zA-Z0-9]+$`)
-
-func SetupRouter(logger *slog.Logger) *gin.Engine {
+func SetupRouter(logger *slog.Logger, db *sqlx.DB) *gin.Engine {
 	r := gin.New()
 	//Logging
 	r.Use(func(c *gin.Context) {
@@ -58,17 +50,6 @@ func SetupRouter(logger *slog.Logger) *gin.Engine {
 	RegisterMetrics(r, db)
 
 	r.GET("/", func(c *gin.Context) {
-		panic("TODO REMOVEME")
-		c.String(200, "OK")
-	})
-	r.GET("/debugon", func(c *gin.Context) {
-		LUCTUSDEBUG = true
-		logger.Warn("Enabled debug output")
-		c.String(200, "OK")
-	})
-	r.GET("/debugoff", func(c *gin.Context) {
-		LUCTUSDEBUG = false
-		logger.Warn("Disabled debug output")
 		c.String(200, "OK")
 	})
 	r.POST("/tttstat", func(c *gin.Context) {
@@ -80,7 +61,7 @@ func SetupRouter(logger *slog.Logger) *gin.Engine {
 			return
 		}
 		ts.Serverip = c.ClientIP()
-		InsertTTTStat(ts, logger)
+		InsertTTTStat(db, ts, logger)
 		c.String(200, "OK")
 	})
 	r.POST("/luaerror", func(c *gin.Context) {
@@ -92,7 +73,7 @@ func SetupRouter(logger *slog.Logger) *gin.Engine {
 			return
 		}
 		le.Serverip = c.ClientIP()
-		InsertLuaError(le)
+		InsertLuaError(db, le)
 		c.String(200, "OK")
 	})
 	r.POST("/darkrpstat", func(c *gin.Context) {
@@ -106,7 +87,7 @@ func SetupRouter(logger *slog.Logger) *gin.Engine {
 			return
 		}
 		ds.Serverip = c.ClientIP()
-		InsertDarkRPStat(ds, logger)
+		InsertDarkRPStat(db, ds, logger)
 		c.String(200, "OK")
 	})
 	r.POST("/luctuslogs", func(c *gin.Context) {
@@ -118,7 +99,7 @@ func SetupRouter(logger *slog.Logger) *gin.Engine {
 			return
 		}
 		ll.Serverip = c.ClientIP()
-		InsertLuctusLogs(ll, logger)
+		InsertLuctusLogs(db, ll, logger)
 		c.String(200, "OK")
 	})
 	r.POST("/playeravatar", func(c *gin.Context) {
@@ -129,9 +110,11 @@ func SetupRouter(logger *slog.Logger) *gin.Engine {
 			c.String(400, "INVALID DATA")
 			return
 		}
-		InsertPlayerAvatar(pa)
+		InsertPlayerAvatar(db, pa)
 		c.String(200, "OK")
 	})
+
+	discordURLRegex := regexp.MustCompile(`^https:\/\/discord.com\/api\/webhooks\/\d+\/[-_a-zA-Z0-9]+$`)
 	r.POST("/discordmsg", func(c *gin.Context) {
 		var dc DiscordMessage
 		err := c.BindJSON(&dc)
@@ -152,7 +135,11 @@ func SetupRouter(logger *slog.Logger) *gin.Engine {
 }
 
 func main() {
-	fmt.Println("Starting!")
+	start := time.Now()
+	//logger
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	//Config
+	config := Config{}
 	configfile, err := os.ReadFile("./config.yaml")
 	if err != nil {
 		panic(err)
@@ -161,34 +148,29 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	LUCTUSDEBUG = config.Debug
-
-	//logger
-	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
-
+	//Web
 	gin.SetMode(gin.ReleaseMode)
-	InitDatabase(config.Mysql)
-	r := SetupRouter(logger)
+	db := InitDatabase(config.Mysql)
+	r := SetupRouter(logger, db)
 	err = r.SetTrustedProxies([]string{"127.0.0.1", "::1"})
 	if err != nil {
 		panic(err)
 	}
-	logger.Info("Now listening", "port", config.Port, "debug", LUCTUSDEBUG)
+	logger.Info("Now listening", "port", config.Port, "startup", time.Since(start))
 	err = r.Run("0.0.0.0:" + config.Port)
 	if err != nil {
 		logger.Error("Error during gin r.Run", "err", err)
 	}
 }
 
-func InitDatabase(conString string) {
-	var err error
-	db, err = sqlx.Open("mysql", conString)
+func InitDatabase(conString string) *sqlx.DB {
+	db, err := sqlx.Open("mysql", conString)
 	if err != nil {
-		panic(err.Error())
+		panic(err)
 	}
 	err = db.Ping()
 	if err != nil {
-		panic(err.Error())
+		panic(err)
 	}
 
 	db.MustExec(`CREATE TABLE IF NOT EXISTS luaerror(
@@ -432,17 +414,17 @@ func InitDatabase(conString string) {
     unique(steamid,steamid64)
     )`)
 
-	fmt.Println("DB initialized!")
+	return db
 }
 
-func InsertLuaError(le LuctusLuaError) {
+func InsertLuaError(db *sqlx.DB, le LuctusLuaError) {
 	_, err := db.NamedExec("INSERT INTO luaerror(serverip,hash,error,stack,addon,gamemode,gameversion,os,ds,realm,version) VALUES(:serverip,:hash,:error,:stack,:addon,:gamemode,:gameversion,:os,:ds,:realm,:version)", le)
 	if err != nil {
 		panic(err)
 	}
 }
 
-func InsertDarkRPStat(ds DarkRPStat, logger *slog.Logger) {
+func InsertDarkRPStat(db *sqlx.DB, ds DarkRPStat, logger *slog.Logger) {
 	tx := db.MustBegin()
 	defer func() {
 		if r := recover(); r != nil {
@@ -502,7 +484,7 @@ func InsertDarkRPStat(ds DarkRPStat, logger *slog.Logger) {
 	}
 }
 
-func InsertLuctusLogs(ll LuctusLogs, logger *slog.Logger) {
+func InsertLuctusLogs(db *sqlx.DB, ll LuctusLogs, logger *slog.Logger) {
 	tx := db.MustBegin()
 	defer func() {
 		if r := recover(); r != nil {
@@ -523,11 +505,11 @@ func InsertLuctusLogs(ll LuctusLogs, logger *slog.Logger) {
 	}
 }
 
-func InsertPlayerAvatar(pa PlayerAvatar) {
+func InsertPlayerAvatar(db *sqlx.DB, pa PlayerAvatar) {
 	db.MustExec("INSERT INTO playeravatar(steamid,steamid64,image) VALUES(?,?,?) ON DUPLICATE KEY UPDATE image=?;", pa.Steamid, pa.Steamid64, pa.Image, pa.Image)
 }
 
-func InsertTTTStat(ts TTTStat, logger *slog.Logger) {
+func InsertTTTStat(db *sqlx.DB, ts TTTStat, logger *slog.Logger) {
 	tx := db.MustBegin()
 	defer func() {
 		if r := recover(); r != nil {
@@ -566,6 +548,8 @@ func InsertTTTStat(ts TTTStat, logger *slog.Logger) {
 		panic(err)
 	}
 }
+
+var httpclient = http.Client{}
 
 func NotifyDiscordWebhook(dc DiscordMessage) {
 	data := map[string]interface{}{

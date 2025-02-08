@@ -144,16 +144,14 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	err = yaml.Unmarshal(configfile, &config)
-	if err != nil {
+	if err := yaml.Unmarshal(configfile, &config); err != nil {
 		panic(err)
 	}
 	//Web
 	gin.SetMode(gin.ReleaseMode)
 	db := InitDatabase(config.Mysql)
 	r := SetupRouter(logger, db)
-	err = r.SetTrustedProxies([]string{"127.0.0.1", "::1"})
-	if err != nil {
+	if err := r.SetTrustedProxies([]string{"127.0.0.1", "::1"}); err != nil {
 		panic(err)
 	}
 	logger.Info("Now listening", "port", config.Port, "startup", time.Since(start))
@@ -428,10 +426,8 @@ func InsertDarkRPStat(db *sqlx.DB, ds DarkRPStat, logger *slog.Logger) {
 	tx := db.MustBegin()
 	defer func() {
 		if r := recover(); r != nil {
-			err := r.(error)
-			logger.Error("Error during InsertDarkRPStat SQL", "err", err)
-			err = tx.Rollback()
-			if err != nil {
+			logger.Error("Error during InsertDarkRPStat SQL", "err", r)
+			if err := tx.Rollback(); err != nil {
 				panic(err)
 			}
 		}
@@ -488,10 +484,8 @@ func InsertLuctusLogs(db *sqlx.DB, ll LuctusLogs, logger *slog.Logger) {
 	tx := db.MustBegin()
 	defer func() {
 		if r := recover(); r != nil {
-			err := r.(error)
-			logger.Error("Error during InsertLuctusLogs SQL", "err", err)
-			err = tx.Rollback()
-			if err != nil {
+			logger.Error("Error during InsertLuctusLogs SQL", "err", r)
+			if err := tx.Rollback(); err != nil {
 				panic(err)
 			}
 		}
@@ -513,10 +507,8 @@ func InsertTTTStat(db *sqlx.DB, ts TTTStat, logger *slog.Logger) {
 	tx := db.MustBegin()
 	defer func() {
 		if r := recover(); r != nil {
-			err := r.(error)
-			logger.Error("Error during InsertTTTStat SQL", "err", err)
-			err = tx.Rollback()
-			if err != nil {
+			logger.Error("Error during InsertTTTStat SQL", "err", r)
+			if err := tx.Rollback(); err != nil {
 				panic(err)
 			}
 		}

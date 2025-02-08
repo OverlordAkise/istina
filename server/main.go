@@ -16,8 +16,7 @@ import (
 	"net/http"
 	"regexp"
 	//Logging
-	ginzap "github.com/gin-contrib/zap"
-	"go.uber.org/zap"
+	"log/slog"
 	"time"
 )
 
@@ -34,17 +33,32 @@ var LUCTUSDEBUG bool = false
 var httpclient = http.Client{}
 var discordURLRegex = regexp.MustCompile(`^https:\/\/discord.com\/api\/webhooks\/\d+\/[-_a-zA-Z0-9]+$`)
 
-func SetupRouter(logger *zap.Logger) *gin.Engine {
+func SetupRouter(logger *slog.Logger) *gin.Engine {
 	r := gin.New()
-	r.Use(ginzap.RecoveryWithZap(logger, true))
-	r.Use(ginzap.GinzapWithConfig(logger, &ginzap.Config{
-		TimeFormat: time.RFC3339,
-		UTC:        true,
-		SkipPaths:  []string{"/metrics"},
-	}))
+	//Logging
+	r.Use(func(c *gin.Context) {
+		start := time.Now()
+		c.Next()
+		if c.Request.URL.Path == "/metrics" {
+			return
+		}
+		logger.Info("req", "status", c.Writer.Status(), "method", c.Request.Method, "host", c.Request.Host, "path", c.Request.URL, "ua", c.Request.UserAgent(), "ip", c.ClientIP(), "duration", time.Since(start))
+	})
+	//Recovery
+	r.Use(func(c *gin.Context) {
+		defer func() {
+			if r := recover(); r != nil {
+				logger.Error("panic", "method", c.Request.Method, "host", c.Request.Host, "path", c.Request.URL, "ua", c.Request.UserAgent(), "ip", c.ClientIP(), "err", r)
+				c.String(500, "ERROR")
+			}
+		}()
+		c.Next()
+	})
+	// r.Use(gin.Recovery())
 	RegisterMetrics(r, db)
 
 	r.GET("/", func(c *gin.Context) {
+		panic("TODO REMOVEME")
 		c.String(200, "OK")
 	})
 	r.GET("/debugon", func(c *gin.Context) {
@@ -61,10 +75,7 @@ func SetupRouter(logger *zap.Logger) *gin.Engine {
 		var ts TTTStat
 		err := c.BindJSON(&ts)
 		if err != nil {
-			logger.Error("Couldn't bind JSON",
-				zap.String("url", c.Request.URL.Path),
-				zap.String("ip", c.ClientIP()),
-			)
+			logger.Error("Couldn't bind JSON", "url", c.Request.URL, "ip", c.ClientIP())
 			c.String(400, "INVALID DATA")
 			return
 		}
@@ -76,10 +87,7 @@ func SetupRouter(logger *zap.Logger) *gin.Engine {
 		var le LuctusLuaError
 		err := c.BindJSON(&le)
 		if err != nil {
-			logger.Error("Couldn't bind JSON",
-				zap.String("url", c.Request.URL.Path),
-				zap.String("ip", c.ClientIP()),
-			)
+			logger.Error("Couldn't bind JSON", "url", c.Request.URL, "ip", c.ClientIP())
 			c.String(400, "INVALID DATA")
 			return
 		}
@@ -93,11 +101,7 @@ func SetupRouter(logger *zap.Logger) *gin.Engine {
 		var ds DarkRPStat
 		err := c.BindJSON(&ds)
 		if err != nil {
-			logger.Error("Couldn't bind JSON",
-				zap.String("url", c.Request.URL.Path),
-				zap.String("ip", c.ClientIP()),
-				zap.String("body", string(body)),
-			)
+			logger.Error("Couldn't bind JSON", "url", c.Request.URL, "ip", c.ClientIP())
 			c.String(400, "INVALID DATA")
 			return
 		}
@@ -109,10 +113,7 @@ func SetupRouter(logger *zap.Logger) *gin.Engine {
 		var ll LuctusLogs
 		err := c.BindJSON(&ll)
 		if err != nil {
-			logger.Error("Couldn't bind JSON",
-				zap.String("url", c.Request.URL.Path),
-				zap.String("ip", c.ClientIP()),
-			)
+			logger.Error("Couldn't bind JSON", "url", c.Request.URL, "ip", c.ClientIP())
 			c.String(400, "INVALID DATA")
 			return
 		}
@@ -124,10 +125,7 @@ func SetupRouter(logger *zap.Logger) *gin.Engine {
 		var pa PlayerAvatar
 		err := c.BindJSON(&pa)
 		if err != nil {
-			logger.Error("Couldn't bind JSON",
-				zap.String("url", c.Request.URL.Path),
-				zap.String("ip", c.ClientIP()),
-			)
+			logger.Error("Couldn't bind JSON", "url", c.Request.URL, "ip", c.ClientIP())
 			c.String(400, "INVALID DATA")
 			return
 		}
@@ -138,28 +136,15 @@ func SetupRouter(logger *zap.Logger) *gin.Engine {
 		var dc DiscordMessage
 		err := c.BindJSON(&dc)
 		if err != nil {
-			logger.Error("Couldn't bind JSON",
-				zap.String("url", c.Request.URL.Path),
-				zap.String("ip", c.ClientIP()),
-			)
+			logger.Error("Couldn't bind JSON", "url", c.Request.URL, "ip", c.ClientIP())
 			c.String(400, "INVALID DATA")
 		}
 		if !discordURLRegex.MatchString(dc.Url) {
-			logger.Error("Discord Regex Mismatch",
-				zap.String("url", c.Request.URL.Path),
-				zap.String("ip", c.ClientIP()),
-				zap.String("wurl", dc.Url),
-			)
+			logger.Error("Discord Regex Mismatch", "url", c.Request.URL, "ip", c.ClientIP(), "durl", dc.Url)
 			c.String(400, "INVALID URL")
 			return
 		}
-		logger.Info("Sending discord webhook",
-			zap.String("url", c.Request.URL.Path),
-			zap.String("ip", c.ClientIP()),
-			zap.String("msg", dc.Msg),
-			zap.String("tag", dc.Tag),
-			zap.String("wurl", dc.Url),
-		)
+		logger.Info("Sending discord webhook", "url", c.Request.URL, "ip", c.ClientIP(), "dmsg", dc.Msg, "dtag", dc.Tag, "durl", dc.Url)
 		NotifyDiscordWebhook(dc)
 		c.String(200, "OK")
 	})
@@ -179,18 +164,8 @@ func main() {
 	LUCTUSDEBUG = config.Debug
 
 	//logger
-	cfg := zap.NewProductionConfig()
-	cfg.DisableStacktrace = true
-	cfg.OutputPaths = []string{
-		config.Logfile,
-	}
-	logger, err := cfg.Build()
-	if err != nil {
-		panic(err)
-	}
-	defer logger.Sync()
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
-	fmt.Println("Debug mode:", LUCTUSDEBUG)
 	gin.SetMode(gin.ReleaseMode)
 	InitDatabase(config.Mysql)
 	r := SetupRouter(logger)
@@ -198,9 +173,11 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("Now listening on *:" + config.Port)
-	logger.Info("Starting server on *:" + config.Port)
-	fmt.Println(r.Run("0.0.0.0:" + config.Port))
+	logger.Info("Now listening", "port", config.Port, "debug", LUCTUSDEBUG)
+	err = r.Run("0.0.0.0:" + config.Port)
+	if err != nil {
+		logger.Error("Error during gin r.Run", "err", err)
+	}
 }
 
 func InitDatabase(conString string) {
@@ -326,7 +303,7 @@ func InitDatabase(conString string) {
     bantime BIGINT,
     curtime BIGINT
     )`)
-    
+
 	db.MustExec(`CREATE TABLE IF NOT EXISTS warns(
     id SERIAL,
     ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
@@ -465,14 +442,12 @@ func InsertLuaError(le LuctusLuaError) {
 	}
 }
 
-func InsertDarkRPStat(ds DarkRPStat, logger *zap.Logger) {
+func InsertDarkRPStat(ds DarkRPStat, logger *slog.Logger) {
 	tx := db.MustBegin()
 	defer func() {
 		if r := recover(); r != nil {
 			err := r.(error)
-			logger.Error("Error during InsertDarkRPStat SQL",
-				zap.String("error", err.Error()),
-			)
+			logger.Error("Error during InsertDarkRPStat SQL", "err", err)
 			err = tx.Rollback()
 			if err != nil {
 				panic(err)
@@ -493,7 +468,7 @@ func InsertDarkRPStat(ds DarkRPStat, logger *zap.Logger) {
 	if len(ds.Players) > 0 {
 		_, err = tx.NamedExec("INSERT INTO rpplayer (serverid,steamid,nick,job,rank,fpsavg,fpslow,fpshigh,pingavg,pingcur,luaramb,luarama,packetslost,os,country,screensize,screenmode,jitver,ip,playtime,playtimel,online,hookthink,hooktick,hookhudpaint,hookhudpaintbackground,hookpredrawhud,hookcreatemove,concommands,funccount,addoncount,addonsize, warns, money) VALUES (:serverid, :steamid, :nick, :job, :rank, :fpsavg, :fpslow, :fpshigh, :pingavg, :pingcur, :luaramb, :luarama, :packetslost, :os, :country, :screensize, :screenmode, :jitver, :ip, :playtime, :playtimel, :online, :hookthink, :hooktick, :hookhudpaint, :hookhudpaintbackground, :hookpredrawhud, :hookcreatemove, :concommands, :funccount, :addoncount, :addonsize, :warns, :money)", ds.Players)
 		if err != nil {
-			logger.Error("sql error during player insert",zap.String("error", err.Error()))
+			logger.Error("sql error during player insert", "err", err)
 		}
 	}
 
@@ -516,8 +491,8 @@ func InsertDarkRPStat(ds DarkRPStat, logger *zap.Logger) {
 	for _, v := range ds.Bans {
 		tx.MustExec("INSERT IGNORE INTO bans(serverid,admin,target,reason,bantime,curtime) VALUES(?,?,?,?,?,?)", ds.Serverid, v.Admin, v.Target, v.Reason, v.Bantime, v.Curtime)
 	}
-    
-    for _, v := range ds.Warns {
+
+	for _, v := range ds.Warns {
 		tx.MustExec("INSERT IGNORE INTO warns(serverid,admin,target,reason) VALUES(?,?,?,?)", ds.Serverid, v.Admin, v.Target, v.Reason)
 	}
 
@@ -527,14 +502,12 @@ func InsertDarkRPStat(ds DarkRPStat, logger *zap.Logger) {
 	}
 }
 
-func InsertLuctusLogs(ll LuctusLogs, logger *zap.Logger) {
+func InsertLuctusLogs(ll LuctusLogs, logger *slog.Logger) {
 	tx := db.MustBegin()
 	defer func() {
 		if r := recover(); r != nil {
 			err := r.(error)
-			logger.Error("Error during InsertLuctusLogs SQL",
-				zap.String("error", err.Error()),
-			)
+			logger.Error("Error during InsertLuctusLogs SQL", "err", err)
 			err = tx.Rollback()
 			if err != nil {
 				panic(err)
@@ -554,14 +527,12 @@ func InsertPlayerAvatar(pa PlayerAvatar) {
 	db.MustExec("INSERT INTO playeravatar(steamid,steamid64,image) VALUES(?,?,?) ON DUPLICATE KEY UPDATE image=?;", pa.Steamid, pa.Steamid64, pa.Image, pa.Image)
 }
 
-func InsertTTTStat(ts TTTStat, logger *zap.Logger) {
+func InsertTTTStat(ts TTTStat, logger *slog.Logger) {
 	tx := db.MustBegin()
 	defer func() {
 		if r := recover(); r != nil {
 			err := r.(error)
-			logger.Error("Error during InsertTTTStat SQL",
-				zap.String("error", err.Error()),
-			)
+			logger.Error("Error during InsertTTTStat SQL", "err", err)
 			err = tx.Rollback()
 			if err != nil {
 				panic(err)
